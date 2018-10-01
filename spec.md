@@ -51,8 +51,19 @@ The signing encoding is defined inductively as follows:
 - `null` is encoded as the utf-8 string `null` (`6E 75 6C 6C` in bytes)
 - `true` is encoded as the utf-8 string `true` (`74 72 75 65` in bytes)
 - `false` is encoded as the utf-8 string `false` (`66 61 6c 73 65` in bytes)
-- a utf8-string containing the bytes `<content>` is encoded as `22 <content> 22`, with the following exceptions:
-  - TODO escape sequences, lots of fun to be had!
+- a utf8-string containing the code points `c_0, ..., c_n` is is encoded as follows:
+  - begin with the utf-8 string `"` (`22` in bytes)
+  - for each code point `c_i`:
+    - if `c_i` is unicode code point `0x000022` (quotation mark `"`), append the utf-8 string `\"` (`5C 22` in bytes)
+    - else if `c_i` is unicode code point `0x00005C` (reverse solidus `\`), append the utf-8 string `\\` (`5C 5C` in bytes)
+    - else if `c_i` is unicode code point `0x000008` (backspace), append the utf-8 string `\b` (`5C 62` in bytes)
+    - else if `c_i` is unicode code point `0x00000C` (form feed), append the utf-8 string `\f` (`5C 66` in bytes)
+    - else if `c_i` is unicode code point `0x00000A` (line feed), append the utf-8 string `\n` (`5C 6E` in bytes)
+    - else if `c_i` is unicode code point `0x00000D` (carriage return), append the utf-8 string `\r` (`5C 72` in bytes)
+    - else if `c_i` is unicode code point `0x00000B` (line tabulation), append the utf-8 string `\t` (`5C 74` in bytes)
+    - else if `c_i` is a unicode code point below `0x000020` (space), append the utf-8 string `\u<hex>` (`5C 75 <hex>` in bytes), where `<hex>` are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters `a` - `f` (bytes `61` to `66`) for alphabetic hex digits
+    - else append the utf-8 representation of `c_i` without any modifiations
+  - append the utf-8 string `"` (`22` in bytes)
 - a float is encoded as TODO
 
 ###### Induction Hypotheses
@@ -63,6 +74,8 @@ Let `v_0, ..., v_n` be legacy values, and let `e_0(indent), ..., e_n(indent)` be
 
 - An array `[v_0, ..., v_n]` is encoded as TODO
 - An object `{ "s_0": v_0, ..., "s_n": v_n}` is encoded as TODO
+
+The string handling is equivalent to [ECMAScript 2015 QuoteJSONString](https://www.ecma-international.org/ecma-262/6.0/#sec-quotejsonstring), but defined over utf-8 strings instead of utf-16 ones.
 
 #### Hash Computation
 
