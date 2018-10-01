@@ -53,7 +53,7 @@ The signing encoding is defined inductively as follows:
 - `false` is encoded as the utf-8 string `false` (`66 61 6c 73 65` in bytes)
 - a utf8-string containing the code points `c_0, ..., c_n` is is encoded as follows:
   - begin with the utf-8 string `"` (`22` in bytes)
-  - for each code point `c_i`:
+  - for each code point `c_i` in `c_0, ..., c_n`:
     - if `c_i` is unicode code point `0x000022` (quotation mark `"`), append the utf-8 string `\"` (`5C 22` in bytes)
     - else if `c_i` is unicode code point `0x00005C` (reverse solidus `\`), append the utf-8 string `\\` (`5C 5C` in bytes)
     - else if `c_i` is unicode code point `0x000008` (backspace), append the utf-8 string `\b` (`5C 62` in bytes)
@@ -72,10 +72,40 @@ Let `v_0, ..., v_n` be legacy values, and let `e_0(indent), ..., e_n(indent)` be
 
 ###### Inductive Step
 
-- An array `[v_0, ..., v_n]` is encoded as TODO
-- An object `{ "s_0": v_0, ..., "s_n": v_n}` is encoded as TODO
+- An array `[v_0, ..., v_n]` is encoded as follows:
+  - if the array is empty (`n == 0`), the encoding is the utf-8 string `[]` (`5B 5D` in bytes)
+  - else, do the following:
+    - begin with the utf-8 string `[<line feed>` (`5B 0A` in bytes)
+    - for each `v_i` in `v_0, ..., v_(n - 1)` (so skip this if `n == 1`):
+      - append `indent + 2` many space characters (`20` in bytes)
+      - append `e_i(indent + 2)`
+      - append the utf-8 string `,<line feed>` (`2C 0A` in bytes)
+    - append `indent + 2` many space characters (`20` in bytes)
+    - append `e_n(indent + 2)`
+    - append the utf-8 string `<line feed>` (`0A` in bytes)
+    - append `indent` many space characters (`20` in bytes)
+    - append the utf-8 string `]` (`5D` in bytes)
+- An object `{ s_0: v_0, ..., s_n: v_n}` is encoded as follows:
+  - if the object is empty (`n == 0`), the encoding is the utf-8 string `{}` (`7B 7D` in bytes)
+  - else, do the following:
+    - begin with the utf-8 string `{<line feed>` (`7B 0A` in bytes)
+    - for each pair `(s_i, v_i)` for `i` in `0, ..., n - 1` (so skip this if `n == 1`):
+      - append `indent + 2` many space characters (`20` in bytes)
+      - append the encoding of the string `s_i`
+      - append the utf-8 string `:<space>` (`3A 20` in bytes)
+      - append `e_i(indent + 2)`
+      - append the utf-8 string `,<line feed>` (`2C 0A` in bytes)
+    - append `indent + 2` many space characters (`20` in bytes)
+    - append the encoding of the string `s_i`
+    - append the utf-8 string `:<space>` (`3A 20` in bytes)
+    - append `e_i(indent + 2)`
+    - append the utf-8 string `<line feed>` (`0A` in bytes)
+    - append `indent` many space characters (`20` in bytes)
+    - append the utf-8 string `}` (`7D` in bytes)
 
 The string handling is equivalent to [ECMAScript 2015 QuoteJSONString](https://www.ecma-international.org/ecma-262/6.0/#sec-quotejsonstring), but defined over utf-8 strings instead of utf-16 ones.
+
+The array and object handling is equivalent to `JSON.stringify(value, null, 2)`, specified in [ECMAScript 2015](https://www.ecma-international.org/ecma-262/6.0/#sec-json.stringify).
 
 #### Hash Computation
 
