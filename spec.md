@@ -33,15 +33,36 @@ Defined inductively in a language-agnostic way:
 
 ###### Induction Hypotheses
 
-Assume `v_1, ..., v_n` are legacy values
+Let `v_0, ..., v_n` be legacy values.
 
 ###### Inductive Step
 
-- An ordered sequence `[v_1, ..., v_n]` where `n <= 2^32 - 1`, is a legacy value, called an *array*
+- An ordered sequence `[v_0, ..., v_n]` where `n < 2^32 - 1`, is a legacy value, called an *array*
 - An unordered set of at most `2^32 - 1` pairs of strings `s_i` (called *keys*) and legacy values `v_i` (called *values*), where all `s_i, s_j` are pairwise distinct, is a legacy value (called an *object*, written `{ "foo": v_1, "bar": v_2}`, the empty object is written as `{}`)
 
 #### Signing Encoding
-TODO
+
+The encoding to turn legacy values into a signeable array of bytes is based on json. There are multiple valid encodings of a single value, because the entries of an objects can be encoded in an arbitary order. But up to object order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.
+
+The signing encoding is defined inductively as follows:
+
+###### Base Cases
+
+- `null` is encoded as the utf-8 string `null` (`6E 75 6C 6C` in bytes)
+- `true` is encoded as the utf-8 string `true` (`74 72 75 65` in bytes)
+- `false` is encoded as the utf-8 string `false` (`66 61 6c 73 65` in bytes)
+- a utf8-string containing the bytes `<content>` is encoded as `22 <content> 22`, with the following exceptions:
+  - TODO escape sequences, lots of fun to be had!
+- a float is encoded as TODO
+
+###### Induction Hypotheses
+
+Let `v_0, ..., v_n` be legacy values, and let `e_0(indent), ..., e_n(indent)` be the corresponding encodings using an indentation of `indent` many spaces. Initially, `indent` is `0`.
+
+###### Inductive Step
+
+- An array `[v_0, ..., v_n]` is encoded as TODO
+- An object `{ "s_0": v_0, ..., "s_n": v_n}` is encoded as TODO
 
 #### Hash Computation
 
@@ -58,3 +79,5 @@ Ssb places a limit on the size of legacy messages. To compute whether a message 
 #### Transport Format
 
 I'm not going to specify this. The transport format can currently be arbitrary json, including stuff that is ruled out for the signing format due to canonicty requirements. There'll be a few breaking changes to the server-to-server rpc protocol anyways (muxrpc, plugin architecture), so I'd strongly prefer to take that opportunity to remove the ability to send json in an arbitrary way.
+
+One important note though: The order of the entries in objects in the transport serialization induces a unique signing encoding to use for checking the signature.
