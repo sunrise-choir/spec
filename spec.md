@@ -75,6 +75,7 @@ The signing encoding is defined inductively as follows:
       - `k` is as small as possible
       - if there are multiple values for `s`, choose the one for which `s * (10 ^ (n - k))` is closest in value to `m`
       - if there are two such possible values of `s`, choose the one that is even
+      - Intuitively, `s` is the integer you get by removing the point ad all trailing zeros from the decimal representation of `m`, `k` is the number of digits in the decimal representation of `s`, and `n` specifies how to print the number: If `n` greater than `0`, there are `n` digits left of the point, else there are `abs(n)` many zeros right of the point. The choice of `s` uniquely determines `k` and `n`, the tricky part is finding a the `s` that rounds correctly and for which `k` is minimal.
     - if `k <= n <= 21`, the encoding is the utf-8 string `<k_decimals><trailing_zeros>`, where `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`, and `<trailing_zeros` are `n - k` zero digits (`30` in bytes)
     - else if `0 <= n <= 21`, the encoding is the utf-8 string `<pre_point>.<post_point>` (`<pre_point> 2E <post_point>` in bytes), where `<pre_point>` is the utf-8 encoding of the most significant `n` digits of the decimal representation of `s`, and `<post_point>` is the utf-8 encoding of the remaining `k - n` digits of the decimal representation of `s`
     - else if `-6 < n <= 0`, the encoding is the utf-8 string `0.<zeros><k_decimals>` (`30 2E <zeros><k_decimals>` in bytes), where `<zeros>` are `-n` many zero digits (`30` in bytes), and `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`
@@ -120,15 +121,14 @@ Let `v_0, ..., v_n` be legacy values, and let `e_0(indent), ..., e_n(indent)` be
 
 The string handling is equivalent to [ECMAScript 2015 QuoteJSONString](https://www.ecma-international.org/ecma-262/6.0/#sec-quotejsonstring), but defined over utf-8 strings instead of utf-16 ones.
 
-The float handling is equivalent to (and quotes from) [ECMAScript 2015 ToString Applied to the Number Type](https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type), with step 5 replaced as specified in NOTE 2 to result in unique encodings. This spec provides a full description of the encoding process, for a deeper understanding and performant implementations, there are some papers on the subject such as:
+The float handling is equivalent to (and quotes from) [ECMAScript 2015 ToString Applied to the Number Type](https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type), with step 5 replaced as specified in NOTE 2 to result in unique encodings. This spec provides a declarative description of the encoding process, for an algorithmic perspective, there are some papers on the subject such as:
 
 - [Steele Jr, Guy L., and Jon L. White. "How to print floating-point numbers accurately." ACM SIGPLAN Notices. Vol. 25. No. 6. ACM, 1990.](https://lists.nongnu.org/archive/html/gcl-devel/2012-10/pdfkieTlklRzN.pdf)
 - [Loitsch, Florian. "Printing floating-point numbers quickly and accurately with integers." ACM Sigplan Notices. Vol. 45. No. 6. ACM, 2010.](https://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf)
 - [Andrysco, Marc, Ranjit Jhala, and Sorin Lerner. "Printing floating-point numbers: a faster, always correct method." ACM SIGPLAN Notices. Vol. 51. No. 1. ACM, 2016.](https://cseweb.ucsd.edu/~lerner/papers/fp-printing-popl16.pdf)
+- [Adams, Ulf. "Ryū: fast float-to-string conversion." Proceedings of the 39th ACM SIGPLAN Conference on Programming Language Design and Implementation. ACM, 2018.](https://dl.acm.org/citation.cfm?id=3192369)
 
 The array and object handling is equivalent to `JSON.stringify(value, null, 2)`, specified in [ECMAScript 2015](https://www.ecma-international.org/ecma-262/6.0/#sec-json.stringify).
-
-TODO: Check whether float handling is really what nodejs does. I just applied NOTE 2 of the [ECMAScript spec](https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type) without knowing whether node actually applies it. I also specified the rounding for the `s * (10 ^ (n - k)) === m` constraint to be round-to-even, without checking what node does, and without knowing whether rounding can even occur. Will check this once there is a test suite, or maybe I'll just ask the v8 people. Kinda want to ask Dominic to do those checks since he's responsible for this madness...
 
 #### Hash Computation
 
