@@ -42,7 +42,7 @@ Let `v_0, ..., v_n` be legacy values.
 
 #### Signing Encoding
 
-The encoding to turn legacy values into a signeable array of bytes is based on json. There are multiple valid encodings of a single value, because the entries of an objects can be encoded in an arbitary order. But up to object order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.
+The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf)). There are multiple valid encodings of a single value, because the entries of an objects can be encoded in an arbitary order. But up to object order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.
 
 The signing encoding is defined inductively as follows:
 
@@ -144,6 +144,9 @@ Ssb places a limit on the size of legacy messages. To compute whether a message 
 
 #### Transport Format
 
-I'm not going to specify this. The transport format can currently be arbitrary json, including stuff that is ruled out for the signing format due to canonicty requirements. There'll be a few breaking changes to the server-to-server rpc protocol anyways (muxrpc, plugin architecture), so I'd strongly prefer to take that opportunity to remove the ability to send json in an arbitrary way.
+In addition to the signing format, legacy messages can be encoded as [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf), with the following differences:
 
-One important note though: The order of the entries in objects in the transport serialization induces a unique signing encoding to use for checking the signature.
+- numbers may not be negative zero
+- numbers may not round to positive infinity, negative infinity or negative zero IEEE 754 64 bit floating point numbers
+- strings may not be longer than `2^53 - 1` bytes
+- arrays and object may not contain more than `2^32 - 1` entries
