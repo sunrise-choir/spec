@@ -150,3 +150,5 @@ In addition to the signing format, legacy messages can be encoded as [ECMA-404 j
 - numbers may not round to positive infinity, negative infinity or negative zero IEEE 754 64 bit floating point numbers
 - strings may not be longer than `2^53 - 1` bytes
 - arrays and object may not contain more than `2^32 - 1` entries
+- objects may not contain multiple entries with the same key
+- in strings, unicode escape sequences of code points greater than `U+FFFF` must be interpreted as a single code point, not as an explicit surrogate pair
