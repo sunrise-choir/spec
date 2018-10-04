@@ -60,7 +60,7 @@ The signing encoding is defined inductively as follows:
     - else if `c_i` is unicode code point `0x00000C` (form feed), append the utf-8 string `\f` (`5C 66` in bytes)
     - else if `c_i` is unicode code point `0x00000A` (line feed), append the utf-8 string `\n` (`5C 6E` in bytes)
     - else if `c_i` is unicode code point `0x00000D` (carriage return), append the utf-8 string `\r` (`5C 72` in bytes)
-    - else if `c_i` is unicode code point `0x00000B` (line tabulation), append the utf-8 string `\t` (`5C 74` in bytes)
+    - else if `c_i` is unicode code point `0x000009` (line tabulation), append the utf-8 string `\t` (`5C 74` in bytes)
     - else if `c_i` is a unicode code point below `0x000020` (space), append the utf-8 string `\u<hex>` (`5C 75 <hex>` in bytes), where `<hex>` are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters `a` - `f` (bytes `61` to `66`) for alphabetic hex digits
     - else append the utf-8 representation of `c_i` without any modifiations
   - append the utf-8 string `"` (`22` in bytes)
