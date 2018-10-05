@@ -132,7 +132,7 @@ The array and object handling is equivalent to `JSON.stringify(value, null, 2)`,
 
 #### Hash Computation
 
-To compute the hash of a message, you can not use the signing encoding, but the hash computation is based on it. The signing encoding always results in valid unicode. Represent this unicode in [utf-16](https://en.wikipedia.org/wiki/UTF-16). This encoding is a sequence of code units, each consisting of two bytes. The data to hash is obtained from these code units by only keeping the less significant byte.
+To compute the hash of a message, you can not use the signing encoding directly, but the hash computation is based on it. The signing encoding always results in valid unicode. Represent this unicode in [utf-16](https://en.wikipedia.org/wiki/UTF-16). This encoding is a sequence of code units, each consisting of two bytes. The data to hash is obtained from these code units by only keeping the less significant byte.
 
 Example: Suppose you want to compute the hash for `"ß"`, the corresponding utf8 is `[22, C3, 9F, 22]`. In big-endian utf16, this is `[(22, 0), (DF, 0), (22, 0)]`, in little-endian utf16, this is `[(0, 22), (0, DF), (0, 22)]`. In both cases, the sequence of less signifiant bytes per code unit is `[22, DF, 22]`. That is the byte array over which to compute the hash.
 
@@ -140,9 +140,9 @@ Note that this means that two strings with different utf-8 encodings can result 
 
 #### Length Computation
 
-Ssb places a limit on the size of legacy messages. To compute whether a message is too long, compute the signing format (which is always valid unicode), encode that unicode as utf16, then count the number of code units. This number must be smaller then `16385` (`== 8192 * 2 + 1`), or the message is considered too long (16384 is still ok).
+Ssb places a limit on the size of legacy messages. To compute whether a message is too long, compute the signing encoding (which is always valid unicode), reencode that unicode as utf16, then count the number of code units. This number must be smaller then `16385` (`== 8192 * 2 + 1`), or the message is considered too long (16384 is still ok).
 
-#### Transport Format
+#### JSON Transport Format
 
 In addition to the signing format, legacy messages can be encoded as [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf), with the following differences:
 
@@ -152,3 +152,22 @@ In addition to the signing format, legacy messages can be encoded as [ECMA-404 j
 - arrays and object may not contain more than `2^32 - 1` entries
 - objects may not contain multiple entries with the same key
 - in strings, unicode escape sequences of code points greater than `U+FFFF` must be interpreted as a single code point, not as an explicit surrogate pair
+
+The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form has been used by the first ssb server implementations for message exchange with other servers.
+
+#### CBOR Encoding of Legacy Data
+
+A much more compact encoding for use in inter-server communication is based upon [CBOR (ietf rfc 7049)](https://tools.ietf.org/html/rfc7049), with the following differences:
+
+- The only allowed major types are:
+  - `3` (text string)
+  - `4` (array)
+  - `5` (map)
+  - `7` (primitives)
+- no indefinite length strings, arrays or maps (additional type `31` is not allowed)
+- the key data items in a map must be text strings (have major type `3`)
+- primitives are restricted to the following additional types:
+  - `20` (`false`)
+  - `21` (`true`)
+  - `22` (`null`)
+  - `27` (64-bit floats)
