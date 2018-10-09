@@ -42,7 +42,7 @@ Let `v_0, ..., v_n` be legacy values.
 
 #### Signing Encoding
 
-The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf)). There are multiple valid encodings of a single value, because the entries of an objects can be encoded in an arbitary order. But up to object order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.
+The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf)). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.
 
 The signing encoding is defined inductively as follows:
 
@@ -118,6 +118,15 @@ Let `v_0, ..., v_n` be legacy values, and let `e_0(indent), ..., e_n(indent)` be
     - append the utf-8 string `<line feed>` (`0A` in bytes)
     - append `indent` many space characters (`20` in bytes)
     - append the utf-8 string `}` (`7D` in bytes)
+  - The order in which to serialize the entries `s_i: v_i` is not fully specified, but there are some constraints:
+    - intuitively: Natural numbers are sorted ascendingly
+    - formally:
+      - if there is an entry with the key `"0"` (`30` in bytes), the entry must be the first to be serialized
+      - all entries whose keys begin with a nonzero decimal digit (1 - 9, `31` - `39` in bytes) followed by zero or more arbitrary decimal digits (0 - 9, `30` - `39` in bytes), must be serialized before all other entries (but after an entry with key `"0"` if one exists). Amongst themselves, these keys are sorted:
+        - by length first (ascending), using
+        - numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
+          - note that this coincides with sorting the decimally encoded numbers by numeric value
+    - all other entries may be serialized in an arbitrary order
 
 The string handling is equivalent to [ECMAScript 2015 QuoteJSONString](https://www.ecma-international.org/ecma-262/6.0/#sec-quotejsonstring), but defined over utf-8 strings instead of utf-16 ones.
 
