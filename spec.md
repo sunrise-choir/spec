@@ -4,9 +4,31 @@ Secure Scuttlebutt is a bla... TODO High level overview goes here.
 
 ## Feeds and Messages
 
-TODO General description of sigchains, how they are constructed and why ssb relies on that particular data structure.
+Ssb is designed around a data model optimized for simple data replication and strong cryptographic integrity guarantees in a social setting. The central entities in this model are *feeds* and *messages*. Messages are the pieces of data inserted into the system, feeds describe *who* authored a piece of data.
 
-TODO signatures, hashes, cypherlinks, future-proofness
+Messages are schemaless, free-form pieces of data (think [json](http://json.org/)). Each message belongs to exactly one feed, and each message contains a backlink to the previous message posted to that feed. Feeds thus form linked lists. Links are implemented via [cryptographically secure hashes](https://en.wikipedia.org/wiki/Cryptographic_hash_function), in that sense feeds behave mostly like blockchains. But whereas blockchains are traditionally used to create a global, single source of truth, ssb chooses a different approach.
+
+Instead of one single, global linked list for all data, each ssb user has their own linked list. To ensure that no malicious actor can append data to other user's list, all messages are [signed](https://en.wikipedia.org/wiki/Digital_signature). We call this data structure - a signed hash-based linked list - a *sigchain*.
+
+The sigchain-per-user design has some very desirable properties:
+
+- data can be moved across untrusted machines, you still know that some piece of data has indeed be posted by a certain identity
+- immutability of data, nothing gets lost
+- the order between messages can not be confused
+- replicating data becomes simple: just exchange the number of messages you know about for a certain feed, and your peer can send you everything that is newer
+
+Of course, this design also has some drawbacks:
+
+- the simple replication scheme does not allow subscription to only parts of the data - it's all or nothing
+- immutability and non-repudiation are not appropriate for all use-cases
+- a single identity can not append data from multiple machines in parallel, as that would result in a tree rather than a linked list
+
+In some sense, ssb can be seen as an experiment whether the advantages of a sigchain-based distributed database outweigh the disadvantages. So far, it appears to be working sufficiently well.
+
+The sigchain implementation consists of two distinct parts. First, there is the self-describing data format of message content. And second, there is the metadata that is attached to every message to form the sigchain.
+
+### Data Formats
+
 
 TODO General introduction to free form messages. Differences between abstract data model, signing encodings, transport encodings and database encodings (but stress that db encodings can be freely chosen and are not part of the protocol - in-memory implementations (including pure client-side implementations) don't even need them).
 
@@ -180,3 +202,14 @@ A much more compact encoding for use in inter-server communication is based upon
   - `21` (`true`)
   - `22` (`null`)
   - `27` (64-bit floats)
+
+<!-- ### Legacy Metadata
+
+The metadata of messages forms the basis for replication strategies and security guarantees of ssb. All message content is annotated with the following pieces of metadata:
+
+- the feed the message belongs to
+- the hash of the previous message from the same feed, or `null`
+- a sequence number indicating the offset in the feed
+- a timestamp of the message's creation time
+- the free-form content of the message
+- a signature to prove that the author knew the private key of the feed -->
