@@ -29,18 +29,24 @@ The sigchain implementation consists of two distinct parts. First, there is the 
 
 ### Data Formats
 
+This section specifies the various data formats used for ssb messages. It is important to clearly distinguish between the abstract data model of a format, and various encodings. For example, the strings `1`, `1.0` and `0.1e1` are all different json encodings of the same abstract value. And there can even be different encoding formats for the same abstract value, e.g. the number `0xf93c00` also encodes the floating point number 1.0, but in [cbor](https://tools.ietf.org/html/rfc7049).
 
-TODO General introduction to free form messages. Differences between abstract data model, signing encodings, transport encodings and database encodings (but stress that db encodings can be freely chosen and are not part of the protocol - in-memory implementations (including pure client-side implementations) don't even need them).
+Ssb messages all use the same abstract data model, but there are different situations where they use different encodings. An encoding used for signing the data has different requirements than an encoding used for transmitting the data, which again has different requirements than an encoding used for persisten storage.
 
-TODO maximum message sizes
+Encodings for persistent storage are not specified in this document, but is crucial for all ssb implementations to compute the exact same signatures, and to send data in a format that can be understood by other implementations. We call these encodings *signing encoding* and *transport encoding* respectively.
 
-### Legacy Messages
+The ssb protocol was initially implemented in javascript, and it relied heavily on implicit behavior of the [node js](https://nodejs.org/en/) runtime. It has since switched to a more carefully designed message format, but the old fomat still needs to be supported to keep backwards-compatibility.
 
-This section describes the message format that was originally used for ssb. The protocol has since moved on, everything here should be considered deprecated. But for backwards compatibility, ssb servers still need to understand, verify and relay old messages.
+#### HSDT Messages
+TODO
 
-Legacy messages have been deprecated, because their design emerged organically through reliance on the default behavior of certain features of [node js](https://nodejs.org/en/). People (including the authors of this specification) have called the legacy message format "bizarre" and worse, and that is entirely justified. But when during reading you inevitably thing "How could anybody end up with this, I could have done a much better job.", then remember: Maybe you could have, but you didn't.
+#### Legacy Messages
 
-#### Abstract Data Model
+This section describes the message format that was originally used by ssb. The protocol has since moved on, everything here should be considered deprecated. But for backwards compatibility, ssb servers still need to understand, verify and relay old messages.
+
+Legacy messages have been deprecated because their design emerged organically through reliance on the default behavior of certain features of [node js](https://nodejs.org/en/). People (including the authors of this specification) have called the legacy message format "bizarre" and worse, and that is entirely justified. But when during reading you inevitably thing "How could anybody end up with this, I could have done a much better job.", then remember: Maybe you could have, but you didn't.
+
+##### Abstract Data Model
 
 The legacy data model describes all of the free-form data that can be carried in a legacy message. It is close to the [json](http://json.org/) data model, but with a few differences. The definition came about as the set of javascript values created by `JSON.parse(json)` for which [`json === JSON.stringify(JSON.parse(json))`](%EyGGCcjAbaShKFCMxXKYiZjQe17SR298D0SLTuKmZpo=.sha256) (javascript code).
 
@@ -62,7 +68,7 @@ Let `v_0, ..., v_n` be legacy values.
 - An ordered sequence `[v_0, ..., v_n]` where `n < 2^32 - 1`, is a legacy value, called an *array*
 - An unordered set of at most `2^32 - 1` pairs of strings `s_i` (called *keys*) and legacy values `v_i` (called *values*), where all `s_i, s_j` are pairwise distinct, is a legacy value (called an *object*, written `{ "foo": v_1, "bar": v_2}`, the empty object is written as `{}`)
 
-#### Signing Encoding
+##### Signing Encoding
 
 The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf)). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.
 
@@ -161,7 +167,7 @@ The float handling is equivalent to (and quotes from) [ECMAScript 2015 ToString 
 
 The array and object handling is equivalent to `JSON.stringify(value, null, 2)`, specified in [ECMAScript 2015](https://www.ecma-international.org/ecma-262/6.0/#sec-json.stringify).
 
-#### Hash Computation
+##### Hash Computation
 
 To compute the hash of a message, you can not use the signing encoding directly, but the hash computation is based on it. The signing encoding always results in valid unicode. Represent this unicode in [utf-16](https://en.wikipedia.org/wiki/UTF-16). This encoding is a sequence of code units, each consisting of two bytes. The data to hash is obtained from these code units by only keeping the less significant byte.
 
@@ -169,11 +175,11 @@ Example: Suppose you want to compute the hash for `"ß"`, the corresponding utf8
 
 Note that this means that two strings with different utf-8 encodings can result in the same hash, due to the information in the more significant byte of the utf-16 encoding being dropped.
 
-#### Length Computation
+##### Length Computation
 
 Ssb places a limit on the size of legacy messages. To compute whether a message is too long, compute the signing encoding (which is always valid unicode), reencode that unicode as utf16, then count the number of code units. This number must be smaller then `16385` (`== 8192 * 2 + 1`), or the message is considered too long (16384 is still ok).
 
-#### JSON Transport Format
+##### JSON Transport Encoding
 
 In addition to the signing format, legacy messages can be encoded as [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf), with the following differences:
 
@@ -186,7 +192,7 @@ In addition to the signing format, legacy messages can be encoded as [ECMA-404 j
 
 The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form has been used by the first ssb server implementations for message exchange with other servers.
 
-#### CBOR Encoding of Legacy Data
+##### CBOR Encoding of Legacy Data
 
 A much more compact encoding for use in inter-server communication is based upon [CBOR (ietf rfc 7049)](https://tools.ietf.org/html/rfc7049), with the following differences:
 
@@ -203,9 +209,10 @@ A much more compact encoding for use in inter-server communication is based upon
   - `22` (`null`)
   - `27` (64-bit floats)
 
-<!-- ### Legacy Metadata
+### Metadata
+TODO
 
-The metadata of messages forms the basis for replication strategies and security guarantees of ssb. All message content is annotated with the following pieces of metadata:
+<!-- The metadata of messages forms the basis for replication strategies and security guarantees of ssb. All message content is annotated with the following pieces of metadata:
 
 - the feed the message belongs to
 - the hash of the previous message from the same feed, or `null`
@@ -213,3 +220,9 @@ The metadata of messages forms the basis for replication strategies and security
 - a timestamp of the message's creation time
 - the free-form content of the message
 - a signature to prove that the author knew the private key of the feed -->
+
+#### HSDT Metadata
+TODO
+
+#### Legacy Metadata
+TODO
