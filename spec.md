@@ -210,19 +210,36 @@ A much more compact encoding for use in inter-server communication is based upon
   - `27` (64-bit floats)
 
 ### Metadata
-TODO
 
-<!-- The metadata of messages forms the basis for replication strategies and security guarantees of ssb. All message content is annotated with the following pieces of metadata:
+The metadata of ssb messages is used to construct the sigchains. Conceptually, to form the sigchain, the metadata of each message must include:
 
 - the feed the message belongs to
 - the hash of the previous message from the same feed, or `null`
-- a sequence number indicating the offset in the feed
-- a timestamp of the message's creation time
 - the free-form content of the message
-- a signature to prove that the author knew the private key of the feed -->
+- a signature to prove that the author knew the private key of the feed
+
+The actual metadata formats also need to include some extra information. Just like the content data, there are both a legacy and a modern metadata format.
 
 #### HSDT Metadata
 TODO
 
 #### Legacy Metadata
-TODO
+
+The abstract model for legacy metadata is a tuple containing the following entries:
+
+- `previous`: either a [yamf-hash](TODO), or the distinct value `null`
+- `author`: a [yamf-pubkey](TODO)
+- `sequence`: a natural number
+- `timestamp`: an IEEE 754 64 bit float except `NaN`s
+- `content`: a [legacy data value](TODO) that is either:
+  - an object containing a entry `"type"`, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16
+  - an encrypted message, encoded as a string which
+    - begins with one or more alphanumeric characters, `/` or `+` (`2B, 2F, 30 ... 39, 41 ... 5A, 61 ... 7A, ` in bytes)
+    - followed by zero, one or two `=` characters (`3D`)
+    - followed by the string `.box` (`[2E, 62, 6F, 78]` in bytes)
+    - followed by zero or more bytes of valid unicode
+- `swapped`: a boolean indicating how to encode the metadata
+
+TODO explain stuff, validation, json encoding, etc.
+
+TODO message size limit
