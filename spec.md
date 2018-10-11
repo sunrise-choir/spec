@@ -2,6 +2,22 @@
 
 Secure Scuttlebutt is a bla... TODO High level overview goes here.
 
+## Common Datatypes
+
+A few datatypes appear throughout this spec, it makes sense to introduce them in one single place. This is that place, make yourself comfortable.
+
+An overarching theme of various parts of the ssb protocol(s) is that of future-proofness. The protocol will need to adapt itself to new circumstances, such as new transport channels, broken cryptographic primitives, or new data regulation laws. A simple way to keep flexibility are self-describing multiformats, where the data is prefixed by an identifier (and in some cases its expected length). New data types can be introduced by simply assigning a new identifier. Older software can detect data types it doesn't understand yet, and react accordingly.
+
+Each format consists of some logical data type, and then one or more encodings. These encodings can serve different purposes, for example they might be optimized for machine-readability, human-readability, uniqueness, etc.
+
+The multiformats have been influenced by [ipfs multiformats](https://multiformats.io/), but ssb diverges in some cases, so we will just define them in this spec.
+
+<!-- ### Varint
+
+TODO wait for feedback on %GrYD8mj3wV5s1bqknoYa+rsoeusSuT3sjPBaktTL7ps=.sha256 -->
+
+
+
 ## Feeds and Messages
 
 Ssb is designed around a data model optimized for simple data replication and strong cryptographic integrity guarantees in a social setting. The central entities in this model are *feeds* and *messages*. Messages are the pieces of data inserted into the system, feeds describe *who* authored a piece of data.
@@ -150,7 +166,7 @@ Let `v_0, ..., v_n` be legacy values, and let `e_0(indent), ..., e_n(indent)` be
     - intuitively: Natural numbers are sorted ascendingly
     - formally:
       - if there is an entry with the key `"0"` (`30` in bytes), the entry must be the first to be serialized
-      - all entries whose keys begin with a nonzero decimal digit (1 - 9, `31` - `39` in bytes) followed by zero or more arbitrary decimal digits (0 - 9, `30` - `39` in bytes), must be serialized before all other entries (but after an entry with key `"0"` if one exists). Amongst themselves, these keys are sorted:
+      - all entries whose keys begin with a nonzero decimal digit (1 - 9, `31` - `39` in bytes) followed by zero or more arbitrary decimal digits (0 - 9, `30` - `39` in bytes) and consists solely of such digits, must be serialized before all other entries (but after an entry with key `"0"` if one exists). Amongst themselves, these keys are sorted:
         - by length first (ascending), using
         - numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
           - note that this coincides with sorting the decimally encoded numbers by numeric value
@@ -230,7 +246,7 @@ The abstract model for legacy metadata is a tuple containing the following entri
 - `previous`: either a [yamf-hash](TODO), or the distinct value `null`
 - `author`: a [yamf-pubkey](TODO)
 - `sequence`: a natural number
-- `timestamp`: an IEEE 754 64 bit float except `NaN`s
+- `timestamp`: an IEEE 754 64 bit float except the inifinities, negative zero, and `NaN`s
 - `content`: a [legacy data value](TODO) that is either:
   - an object containing a entry `"type"`, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16
   - an encrypted message, encoded as a string which
