@@ -16,7 +16,42 @@ The multiformats have been influenced by [ipfs multiformats](https://multiformat
 
 TODO wait for feedback on %GrYD8mj3wV5s1bqknoYa+rsoeusSuT3sjPBaktTL7ps=.sha256 -->
 
+### Multikey
 
+A multikey is the public key of some [digital signature](https://en.wikipedia.org/wiki/Digital_signature) scheme, annotated with an identifier for the scheme itself. The only currently supported cryptographic primitive is [ed25519](http://ed25519.cr.yp.to/) (which has a public key length of 32 bytes).
+
+#### Legacy Encoding
+
+The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multikeys as a json string. The encoding of a multikey is defined as the concatenation of:
+
+- the character `"` (`22` in bytes)
+- the character `@` (`40` in bytes)
+- the base64 encoding of the key itself
+  - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
+- the character `.` (`2E` in bytes)
+- the primitive-specific suffix
+  - for ed25519, this is `ed25519` (`65 64 32 35 35 31 39` in bytes)
+- the character `"` (`22` in bytes)
+
+### Multihash
+
+A multihash is the hash digest of some [cryptographically secure hash function](https://en.wikipedia.org/wiki/Cryptographic_hash_function), annotated with an identifier for the hash function itself. The only currently supported cryptographic primitive is [sha256](https://en.wikipedia.org/wiki/SHA-2) (which has a digest length of 32 bytes).
+
+#### Legacy Encoding
+
+The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multihashes as a json string. The encoding of a multihash is defined as the concatenation of:
+
+- the character `"` (`22` in bytes)
+- either the character `%` (`25` in bytes) or the character `&` (`26` in bytes)
+  - this is sometimes used to distinguish between messages and blobs:
+    - the encoding using `%` is called a (legacy) message (multi)hash
+    - the encoding using `&` is called a (legacy) blob (multi)hash
+- the base64 encoding of the digest itself
+  - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
+- the character `.` (`2E` in bytes)
+- the primitive-specific suffix
+  - for sha256, this is `sha256` (`73 68 61 32 35 36` in bytes)
+- the character `"` (`22` in bytes)
 
 ## Feeds and Messages
 
