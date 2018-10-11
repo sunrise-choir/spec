@@ -240,6 +240,7 @@ In addition to the signing format, legacy messages can be encoded as [ECMA-404 j
 - arrays and object may not contain more than `2^32 - 1` entries
 - objects may not contain multiple entries with the same key
 - in strings, unicode escape sequences of code points greater than `U+FFFF` must be interpreted as a single code point, not as an explicit surrogate pair
+- escape sequences of surrogate code points must be matched: Each escape sequence for a high surrogate must be followed by an escape sequence for a low surrogate, and any escape sequence for a low surrogate must be preceded by an escape sequence for a high surrogate
 
 The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form has been used by the first ssb server implementations for message exchange with other servers.
 
