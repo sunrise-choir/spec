@@ -24,14 +24,14 @@ A multikey is the public key of some [digital signature](https://en.wikipedia.or
 
 The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multikeys as a json string. The encoding of a multikey is defined as the concatenation of:
 
-- the character `"` (`22` in bytes)
 - the character `@` (`40` in bytes)
 - the base64 encoding of the key itself
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
 - the character `.` (`2E` in bytes)
 - the primitive-specific suffix
   - for ed25519, this is `ed25519` (`65 64 32 35 35 31 39` in bytes)
-- the character `"` (`22` in bytes)
+
+Typically this is stored in a json string.
 
 ### Multihash
 
@@ -41,7 +41,6 @@ A multihash is the hash digest of some [cryptographically secure hash function](
 
 The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multihashes as a json string. The encoding of a multihash is defined as the concatenation of:
 
-- the character `"` (`22` in bytes)
 - either the character `%` (`25` in bytes) or the character `&` (`26` in bytes)
   - this is sometimes used to distinguish between messages and blobs:
     - the encoding using `%` is called a (legacy) message (multi)hash
@@ -51,7 +50,8 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
 - the character `.` (`2E` in bytes)
 - the primitive-specific suffix
   - for sha256, this is `sha256` (`73 68 61 32 35 36` in bytes)
-- the character `"` (`22` in bytes)
+
+Typically this is stored in a json string.
 
 ## Feeds and Messages
 
@@ -300,16 +300,14 @@ The abstract model for legacy metadata is a tuple containing the following entri
 
 Legacy metadata can be encoded as json, just like regular legacy data. The json encoding is a json object containing the entries listed above, with the following additional regulations:
 
-- the `previous` multihash must use the [legacy message hash encoding](TODO)
-- the `author` multikey must use the legacy multikey encoding
-- the `signature` value must be encoded as the concatenation of:
-  - the character `"` (`22` in bytes)
+- the `previous` multihash must use the [legacy message hash encoding](TODO) as a string
+- the `author` multikey must use the legacy multikey encoding as a string
+- the `signature` value is a string whoe content is the concatenation of:
   - the base64 encoding of the message's signature itself (see next section)
     - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
   - the characters `.sig.` (`2E 73 69 67 2E` in bytes)
   - a primitive-specific suffix, depending of the primitive of the `author`
     - for ed25519, this is `ed25519` (`65 64 32 35 35 31 39` in bytes)
-  - the character `"` (`22` in bytes)
 - the `swapped` boolean is omitted
 - an entry `"hash": "sha256"` is added
 - if `swapped`, the order of entries must be `previous, sequence, author, timestamp, hash, content, signature`, else it must be `previous, author, sequence, timestamp, hash, content, signature`
@@ -335,4 +333,5 @@ To compute the size of a legacy message, use the [legacy value length computatio
 A legacy message is considered valid if and only if all of the following conditions are met:
 
 - its json encoding is a possible output of the [message creation algorithm](TODO)
+  - in particular, the claimed signature must match the data and public key
 - its length is smaller than `16385`
