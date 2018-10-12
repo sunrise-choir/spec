@@ -284,7 +284,7 @@ The abstract model for legacy metadata is a tuple containing the following entri
 - `previous`: either a [multihash](TODO), or the distinct value `null`
 - `author`: a [multikey](TODO)
 - `sequence`: a natural number
-- `timestamp`: an IEEE 754 64 bit float except the inifinities, negative zero, and `NaN`s
+- `timestamp`: an IEEE 754 64 bit float except the infinities, negative zero, and `NaN`s
 - `content`: a [legacy data value](TODO) that is either:
   - an object containing a entry `"type"`, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16
   - an encrypted message, encoded as a string which
