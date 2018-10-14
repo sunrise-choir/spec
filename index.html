@@ -1,0 +1,604 @@
+<h1 id="securescuttlebuttspecification">Secure Scuttlebutt Specification</h1>
+
+<p>Secure Scuttlebutt is a bla... TODO High level overview goes here.</p>
+
+<h2 id="commondatatypes">Common Datatypes</h2>
+
+<p>A few datatypes appear throughout this spec, it makes sense to introduce them in one single place. This is that place, make yourself comfortable.</p>
+
+<p>An overarching theme of various parts of the ssb protocol(s) is that of future-proofness. The protocol will need to adapt itself to new circumstances, such as new transport channels, broken cryptographic primitives, or new data regulation laws. A simple
+    way to keep flexibility are self-describing multiformats, where the data is prefixed by an identifier (and in some cases its expected length). New data types can be introduced by simply assigning a new identifier. Older software can detect data types
+    it doesn't understand yet, and react accordingly.</p>
+
+<p>Each format consists of some logical data type, and then one or more encodings. These encodings can serve different purposes, for example they might be optimized for machine-readability, human-readability, uniqueness, etc.</p>
+
+<p>The multiformats have been influenced by <a href="https://multiformats.io/">ipfs multiformats</a>, but ssb diverges in some cases, so we will just define them in this spec.</p>
+
+<!-- ### Varint
+TODO wait for feedback on %GrYD8mj3wV5s1bqknoYa+rsoeusSuT3sjPBaktTL7ps=.sha256 -->
+
+<h3 id="multikey">Multikey</h3>
+
+<p>A multikey is the public key of some <a href="https://en.wikipedia.org/wiki/Digital_signature">digital signature</a> scheme, annotated with an identifier for the scheme itself. The only currently supported cryptographic primitive is <a href="http://ed25519.cr.yp.to/">ed25519</a>    (which has a public key length of 32 bytes).</p>
+
+<h4 id="multikey-encoding-legacy">Legacy Encoding</h4>
+
+<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multikeys as a json string. The encoding of a multikey is defined as the concatenation of:</p>
+
+<ul>
+    <li>the character <code>@</code> (<code>0x40</code>)</li>
+
+    <li>the base64 encoding of the key itself
+
+
+        <ul>
+            <li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code> characters inside the data or after the necessary padding <code>=</code>s</li>
+        </ul>
+    </li>
+
+    <li>the character <code>.</code> (<code>0x2E</code>)</li>
+
+    <li>the primitive-specific suffix
+
+
+        <ul>
+            <li>for ed25519, this is <code>ed25519</code> (<code>[0x65, 0x64, 0x32, 0x35, 0x35, 0x31, 0x39]</code>)</li>
+        </ul>
+    </li>
+</ul>
+
+<p>Typically this is stored in a json string.</p>
+
+<h3 id="multihash">Multihash</h3>
+
+<p>A multihash is the hash digest of some <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">cryptographically secure hash function</a>, annotated with an identifier for the hash function itself. The only currently supported cryptographic
+    primitive is <a href="https://en.wikipedia.org/wiki/SHA-2">sha256</a> (which has a digest length of 32 bytes).</p>
+
+<h4 id="multihash-encoding-legacy">Legacy Encoding</h4>
+
+<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multihashes as a json string. The encoding of a multihash is defined as the concatenation of:</p>
+
+<ul>
+    <li>either the character <code>%</code> (<code>0x25</code>) or the character <code>&amp;</code> (<code>0x26</code>)
+
+
+        <ul>
+            <li>this is sometimes used to distinguish between messages and blobs:</li>
+
+            <li>the encoding using <code>%</code> is called a (legacy) message (multi)hash</li>
+
+            <li>the encoding using <code>&amp;</code> is called a (legacy) blob (multi)hash</li>
+        </ul>
+    </li>
+
+    <li>the base64 encoding of the digest itself
+
+
+        <ul>
+            <li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code> characters inside the data or after the necessary padding <code>=</code>s</li>
+        </ul>
+    </li>
+
+    <li>the character <code>.</code> (<code>0x2E</code>)</li>
+
+    <li>the primitive-specific suffix
+
+
+        <ul>
+            <li>for sha256, this is <code>sha256</code> (<code>[0x73, 0x68, 0x61, 0x32, 0x35, 0x36]</code>)</li>
+        </ul>
+    </li>
+</ul>
+
+<p>Typically this is stored in a json string.</p>
+
+<h2 id="feedsandmessages">Feeds and Messages</h2>
+
+<p>Ssb is designed around a data model optimized for simple data replication and strong cryptographic integrity guarantees in a social setting. The central entities in this model are <em>feeds</em> and <em>messages</em>. Messages are the pieces of data inserted
+    into the system, feeds describe <em>who</em> authored a piece of data.</p>
+
+<p>Messages are schemaless, free-form pieces of data (think <a href="http://json.org/">json</a>). Each message belongs to exactly one feed, and each message contains a backlink to the previous message posted to that feed. Feeds thus form linked lists. Links
+    are implemented via <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">cryptographically secure hashes</a>, in that sense feeds behave mostly like blockchains. But whereas blockchains are traditionally used to create a global, single
+    source of truth, ssb chooses a different approach.</p>
+
+<p>Instead of one single, global linked list for all data, each ssb user has their own linked list. To ensure that no malicious actor can append data to other user's list, all messages are <a href="https://en.wikipedia.org/wiki/Digital_signature">signed</a>.
+    We call this data structure - a signed hash-based linked list - a <em>sigchain</em>.</p>
+
+<p>The sigchain-per-user design has some very desirable properties:</p>
+
+<ul>
+    <li>data can be moved across untrusted machines, you still know that some piece of data has indeed be posted by a certain identity</li>
+
+    <li>immutability of data, nothing gets lost</li>
+
+    <li>the order between messages can not be confused</li>
+
+    <li>replicating data becomes simple: just exchange the number of messages you know about for a certain feed, and your peer can send you everything that is newer</li>
+</ul>
+
+<p>Of course, this design also has some drawbacks:</p>
+
+<ul>
+    <li>the simple replication scheme does not allow subscription to only parts of the data - it's all or nothing</li>
+
+    <li>immutability and non-repudiation are not appropriate for all use-cases</li>
+
+    <li>a single identity can not append data from multiple machines in parallel, as that would result in a tree rather than a linked list</li>
+</ul>
+
+<p>In some sense, ssb can be seen as an experiment whether the advantages of a sigchain-based distributed database outweigh the disadvantages. So far, it appears to be working sufficiently well.</p>
+
+<p>The sigchain implementation consists of two distinct parts. First, there is the self-describing data format of message content. And second, there is the metadata that is attached to every message to form the sigchain.</p>
+
+<h3 id="dataformats">Data Formats</h3>
+
+<p>This section specifies the various data formats used for ssb messages. It is important to clearly distinguish between the abstract data model of a format, and its encodings. For example, the strings <code>1</code>, <code>1.0</code> and <code>0.1e1</code>    are all different json encodings of the same abstract value. And there can even be different encoding formats for the same abstract value, e.g. the number <code>0xf93c00</code> also encodes the floating point number 1.0, but in <a href="https://tools.ietf.org/html/rfc7049">cbor</a>.</p>
+
+<p>Ssb messages all use the same abstract data model, but there are different situations where they use different encodings. An encoding used for signing the data has different requirements than an encoding used for transmitting the data, which again has
+    different requirements than an encoding used for persisten storage.</p>
+
+<p>Encodings for persistent storage are not specified in this document, but is crucial for all ssb implementations to compute the exact same signatures, and to send data in a format that can be understood by other implementations. We call these encodings
+    <em>signing encoding</em> and <em>transport encoding</em> respectively.</p>
+
+<p>The ssb protocol was initially implemented in javascript, and it relied heavily on implicit behavior of the <a href="https://nodejs.org/en/">node js</a> runtime. It has since switched to a more carefully designed message format, but the old fomat still
+    needs to be supported to keep backwards-compatibility.</p>
+
+<!-- #### HSDT Messages
+TODO -->
+
+<h4 id="dataformat-legacy">Legacy Data Format</h4>
+
+<p>This section describes the message format that was originally used by ssb. The protocol has since moved on, everything here should be considered deprecated. But for backwards compatibility, ssb servers still need to understand, verify and relay old messages.</p>
+
+<p>Legacy messages have been deprecated because their design emerged organically through reliance on the default behavior of certain features of <a href="https://nodejs.org/en/">node js</a>. People (including the authors of this specification) have called
+    the legacy message format "bizarre" and worse, and that is entirely justified. But when during reading you inevitably thing "How could anybody end up with this, I could have done a much better job.", then remember: Maybe you could have, but you didn't.</p>
+
+<h5 id="dataformat-legacy-abstract">Abstract Data Model</h5>
+
+<p>The legacy data model describes all of the free-form data that can be carried in a legacy message. It is close to the <a href="http://json.org/">json</a> data model, but with a few differences. The definition came about as the set of javascript values
+    created by <code>JSON.parse(json)</code> for which <a href="%EyGGCcjAbaShKFCMxXKYiZjQe17SR298D0SLTuKmZpo=.sha256"><code>json === JSON.stringify(JSON.parse(json))</code></a> (javascript code).</p>
+
+<p>Defined inductively in a language-agnostic way:</p>
+
+<h6 id="basecases">Base Cases</h6>
+
+<ul>
+    <li><code>null</code> is a legacy value, simply called <em>null</em></li>
+
+    <li><code>true</code> and <code>false</code> are legacy values, called <em>booleans</em></li>
+
+    <li>an ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a> of length between <code>0</code> and <code>2^53 - 1</code> (inclusive) is a legacy value (may include null bytes, called a <em>utf8 string</em>)</li>
+
+    <li>an <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> double precision (64 bit) floating point number that is none of <code>Infinity</code>, <code>-Infinity</code>, <code>-0</code> or <code>NaN</code> is a legacy value, called a <em>float</em></li>
+</ul>
+
+<h6 id="inductionhypotheses">Induction Hypotheses</h6>
+
+<p>Let <code>v_0, ..., v_n</code> be legacy values.</p>
+
+<h6 id="inductivestep">Inductive Step</h6>
+
+<ul>
+    <li>An ordered sequence <code>[v_0, ..., v_n]</code> where <code>n &lt; 2^32 - 1</code>, is a legacy value, called an <em>array</em></li>
+
+    <li>An unordered set of at most <code>2^32 - 1</code> pairs of strings <code>s_i</code> (called <em>keys</em>) and legacy values <code>v_i</code> (called <em>values</em>), where all <code>s_i, s_j</code> are pairwise distinct, is a legacy value (called
+        an <em>object</em>, written <code>{ "foo": v_1, "bar": v_2}</code>, the empty object is written as <code>{}</code>)</li>
+</ul>
+
+<h5 id="dataformat-legacy-encoding-signing">Signing Encoding</h5>
+
+<p>The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>). There are multiple
+    valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the object entries in the
+    transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.</p>
+
+<p>The signing encoding is defined inductively as follows:</p>
+
+<h6 id="basecases-1">Base Cases</h6>
+
+<ul>
+    <li><code>null</code> is encoded as the utf-8 string <code>null</code> (<code>[0x6E, 0x75, 0x6C, 0x6C]</code>)</li>
+
+    <li><code>true</code> is encoded as the utf-8 string <code>true</code> (<code>[0x74, 0x72, 0x75, 0x65]</code>)</li>
+
+    <li><code>false</code> is encoded as the utf-8 string <code>false</code> (<code>[0x66, 0x61, 0x6c, 0x73, 0x65]</code>)</li>
+
+    <li>a utf8-string containing the code points <code>c_0, ..., c_n</code> is is encoded as follows:
+
+
+        <ul>
+            <li>begin with the utf-8 string <code>"</code> (<code>0x22</code>)</li>
+
+            <li>for each code point <code>c_i</code> in <code>c_0, ..., c_n</code>:</li>
+
+            <li>if <code>c_i</code> is unicode code point <code>0x000022</code> (quotation mark <code>"</code>), append the utf-8 string <code>\"</code> (<code>[0x5C, 0x22]</code>)</li>
+
+            <li>else if <code>c_i</code> is unicode code point <code>0x00005C</code> (reverse solidus <code>\</code>), append the utf-8 string <code>\\</code> (<code>[0x5C, 0x5C]</code>)</li>
+
+            <li>else if <code>c_i</code> is unicode code point <code>0x000008</code> (backspace), append the utf-8 string <code>\b</code> (<code>[0x5C, 0x62]</code>)</li>
+
+            <li>else if <code>c_i</code> is unicode code point <code>0x00000C</code> (form feed), append the utf-8 string <code>\f</code> (<code>[0x5C, 0x66]</code>)</li>
+
+            <li>else if <code>c_i</code> is unicode code point <code>0x00000A</code> (line feed), append the utf-8 string <code>\n</code> (<code>[0x5C, 0x6E]</code>)</li>
+
+            <li>else if <code>c_i</code> is unicode code point <code>0x00000D</code> (carriage return), append the utf-8 string <code>\r</code> (<code>[0x5C, 0x72]</code>)</li>
+
+            <li>else if <code>c_i</code> is unicode code point <code>0x000009</code> (line tabulation), append the utf-8 string <code>\t</code> (<code>[0x5C, 0x74]</code>)</li>
+
+            <li>else if <code>c_i</code> is a unicode code point below <code>0x000020</code> (space), append the utf-8 string <code>\u&lt;hex&gt;</code> (<code>[0x5C, 0x75, &lt;hex&gt;]</code>), where <code>&lt;hex&gt;</code> are the two utf-8 bytes of the
+                hexadecimal encoding of the code point, using lower-case letters <code>a</code> - <code>f</code> (<code>0x61</code> - <code>0x66</code>) for alphabetic hex digits</li>
+
+            <li>else append the utf-8 representation of <code>c_i</code> without any modifiations</li>
+
+            <li>append the utf-8 string <code>"</code> (<code>0x22</code>)</li>
+        </ul>
+    </li>
+
+    <li>a float <code>m</code> is encoded as follows:
+
+
+        <ul>
+            <li>if <code>m == 0</code>, the encoding is the utf-8 string <code>0</code> (<code>0x30</code>)</li>
+
+            <li>else if <code>m</code> is negative, the encoding is the utf-8 string <code>-&lt;abs(m)&gt;</code>(<code>[0x2d, &lt;abs(m)&gt;]</code>), where <code>&lt;abs(m)&gt;</code> is the encoding of the same float with the sign bit flipped</li>
+
+            <li>else (largely quoting from the <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type">ECMAScript specification, applying NOTE 2</a> from here on):</li>
+
+            <li>let <code>n</code>, <code>k</code> and <code>s</code> be integers such that:
+
+
+                <ul>
+                    <li><code>k &gt;= 1</code></li>
+
+                    <li><code>10 ^ (k - 1) &lt;= s &lt;= 10 ^ k</code></li>
+
+                    <li><code>s * (10 ^ (n - k))</code> is <code>m</code> (or <a href="https://en.wikipedia.org/wiki/Rounding#Round_half_to_even">round-to-even-s</a> to <code>m</code> if it is not precisely representable in a 64 bit float)</li>
+
+                    <li><code>k</code> is as small as possible</li>
+
+                    <li>if there are multiple values for <code>s</code>, choose the one for which <code>s * (10 ^ (n - k))</code> is closest in value to <code>m</code></li>
+
+                    <li>if there are two such possible values of <code>s</code>, choose the one that is even</li>
+
+                    <li>Intuitively, <code>s</code> is the integer you get by removing the point ad all trailing zeros from the decimal representation of <code>m</code>, <code>k</code> is the number of digits in the decimal representation of <code>s</code>,
+                        and <code>n</code> specifies how to print the number: If <code>n</code> greater than <code>0</code>, there are <code>n</code> digits left of the point, else there are <code>abs(n)</code> many zeros right of the point. The choice
+                        of <code>s</code> uniquely determines <code>k</code> and <code>n</code>, the tricky part is finding a the <code>s</code> that rounds correctly and for which <code>k</code> is minimal.</li>
+                </ul>
+            </li>
+
+            <li>if <code>k &lt;= n &lt;= 21</code>, the encoding is the utf-8 string <code>&lt;k_decimals&gt;&lt;trailing_zeros&gt;</code>, where <code>&lt;k_decimals&gt;</code> is the utf-8 encoding of the digits of the decimal representation of <code>s</code>,
+                and <code>&lt;trailing_zeros</code> are <code>n - k</code> zero digits (<code>0x30</code>)</li>
+
+            <li>else if <code>0 &lt;= n &lt;= 21</code>, the encoding is the utf-8 string <code>&lt;pre_point&gt;.&lt;post_point&gt;</code> (<code>[&lt;pre_point&gt;, 0x2E, &lt;post_point&gt;]</code>), where <code>&lt;pre_point&gt;</code> is the utf-8 encoding
+                of the most significant <code>n</code> digits of the decimal representation of <code>s</code>, and <code>&lt;post_point&gt;</code> is the utf-8 encoding of the remaining <code>k - n</code> digits of the decimal representation of <code>s</code></li>
+
+            <li>else if <code>-6 &lt; n &lt;= 0</code>, the encoding is the utf-8 string <code>0.&lt;zeros&gt;&lt;k_decimals&gt;</code> (<code>[0x30, 0x2E, &lt;zeros&gt;, &lt;k_decimals&gt;]</code>), where <code>&lt;zeros&gt;</code> are <code>-n</code> many
+                zero digits (<code>0x30</code>), and <code>&lt;k_decimals&gt;</code> is the utf-8 encoding of the digits of the decimal representation of <code>s</code></li>
+
+            <li>else if <code>k == 1</code>, the encoding is <code>&lt;base&gt;e&lt;sign&gt;&lt;exp&gt;</code> (<code>[&lt;base&gt;, 0x65, &lt;sign&gt;, &lt;exp&gt;]</code>), where <code>&lt;base&gt;</code> is the utf-8 encoding of the single digit of <code>s</code>,
+                <code>&lt;sign&gt;</code> is the utf-8 string <code>+</code> (<code>0x2B</code>) if <code>n - 1</code> is positive or the utf-8 string <code>-</code> (<code>0x2D</code>) if <code>n - 1</code> is negative, and <code>&lt;exp&gt;</code> is
+                the utf-8 encoding of the decimal representation of the absolute value of <code>n - 1</code></li>
+
+            <li>else, the encoding is the utf-8 string <code>&lt;pre_point&gt;.&lt;post_point&gt;e&lt;sign&gt;&lt;exp&gt;</code> (<code>[&lt;pre_point&gt;, 0x2E, &lt;post_point&gt;, 0x65, &lt;sign&gt;, &lt;exp&gt;]</code>), where <code>&lt;pre_point&gt;</code>                is the utf-8 encoding of the most significant digit of the decimal representation of <code>s</code>, <code>&lt;post_point&gt;</code> is the utf-8 encoding of the remaining <code>k - 1</code> digits of the decimal representation of <code>s</code>,
+                <code>&lt;sign&gt;</code> is the utf-8 string <code>+</code> (<code>0x2B</code>) if <code>n - 1</code> is positive or the utf-8 string <code>-</code> (<code>0x2D</code>) if <code>n - 1</code> is negative, and <code>&lt;exp&gt;</code> is
+                the utf-8 encoding of the decimal representation of the absolute value of <code>n - 1</code></li>
+        </ul>
+    </li>
+</ul>
+
+<h6 id="inductionhypotheses-1">Induction Hypotheses</h6>
+
+<p>Let <code>v_0, ..., v_n</code> be legacy values, and let <code>e_0(indent), ..., e_n(indent)</code> be the corresponding encodings using an indentation of <code>indent</code> many spaces. Initially, <code>indent</code> is <code>0</code>.</p>
+
+<h6 id="inductivestep-1">Inductive Step</h6>
+
+<ul>
+    <li>An array <code>[v_0, ..., v_n]</code> is encoded as follows:
+
+
+        <ul>
+            <li>if the array is empty (<code>n == 0</code>), the encoding is the utf-8 string <code>[]</code> (<code>[0x5B, 0x5D]</code>)</li>
+
+            <li>else, do the following:</li>
+
+            <li>begin with the utf-8 string <code>[&lt;line feed&gt;</code> (<code>[0x5B, 0x0A]</code>)</li>
+
+            <li>for each <code>v_i</code> in <code>v_0, ..., v_(n - 1)</code> (so skip this if <code>n == 1</code>):
+
+
+                <ul>
+                    <li>append <code>indent + 2</code> many space characters (<code>0x20</code>)</li>
+
+                    <li>append <code>e_i(indent + 2)</code></li>
+
+                    <li>append the utf-8 string <code>,&lt;line feed&gt;</code> (<code>[0x2C, 0x0A]</code>)</li>
+                </ul>
+            </li>
+
+            <li>append <code>indent + 2</code> many space characters (<code>0x20</code>)</li>
+
+            <li>append <code>e_n(indent + 2)</code></li>
+
+            <li>append the utf-8 string <code>&lt;line feed&gt;</code> (<code>0x0A</code>)</li>
+
+            <li>append <code>indent</code> many space characters (<code>0x20</code>)</li>
+
+            <li>append the utf-8 string <code>]</code> (<code>0x5D</code>)</li>
+        </ul>
+    </li>
+
+    <li>An object <code>{ s_0: v_0, ..., s_n: v_n}</code> is encoded as follows:
+
+
+        <ul>
+            <li>if the object is empty (<code>n == 0</code>), the encoding is the utf-8 string <code>{}</code> (<code>[0x7B, 0x7D]</code>)</li>
+
+            <li>else, do the following:</li>
+
+            <li>begin with the utf-8 string <code>{&lt;line feed&gt;</code> (<code>[0x7B, 0x0A]</code>)</li>
+
+            <li>for each pair <code>(s_i, v_i)</code> for <code>i</code> in <code>0, ..., n - 1</code> (so skip this if <code>n == 1</code>):
+
+
+                <ul>
+                    <li>append <code>indent + 2</code> many space characters (<code>0x20</code>)</li>
+
+                    <li>append the encoding of the string <code>s_i</code></li>
+
+                    <li>append the utf-8 string <code>:&lt;space&gt;</code> (<code>[0x3A, 0x20]</code>)</li>
+
+                    <li>append <code>e_i(indent + 2)</code></li>
+
+                    <li>append the utf-8 string <code>,&lt;line feed&gt;</code> (<code>[0x2C, 0x0A]</code>)</li>
+                </ul>
+            </li>
+
+            <li>append <code>indent + 2</code> many space characters (<code>0x20</code>)</li>
+
+            <li>append the encoding of the string <code>s_i</code></li>
+
+            <li>append the utf-8 string <code>:&lt;space&gt;</code> (<code>[0x3A, 0x20]</code>)</li>
+
+            <li>append <code>e_i(indent + 2)</code></li>
+
+            <li>append the utf-8 string <code>&lt;line feed&gt;</code> (<code>0x0A</code>)</li>
+
+            <li>append <code>indent</code> many space characters (<code>0x20</code>)</li>
+
+            <li>append the utf-8 string <code>}</code> (<code>0x7D</code>)</li>
+
+            <li>The order in which to serialize the entries <code>s_i: v_i</code> is not fully specified, but there are some constraints:</li>
+
+            <li>intuitively: Natural numbers are sorted ascendingly</li>
+
+            <li>formally:
+
+
+                <ul>
+                    <li>if there is an entry with the key <code>"0"</code> (<code>0x30</code>), the entry must be the first to be serialized</li>
+
+                    <li>all entries whose keys begin with a nonzero decimal digit (1 - 9 (<code>0x31</code> - <code>0x39</code>)) followed by zero or more arbitrary decimal digits (0 - 9 (<code>0x30</code> - <code>0x39</code>)) and consists solely of such
+                        digits, must be serialized before all other entries (but after an entry with key <code>"0"</code> if one exists). Amongst themselves, these keys are sorted:</li>
+
+                    <li>by length first (ascending), using</li>
+
+                    <li>numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
+
+
+                        <ul>
+                            <li>note that this coincides with sorting the decimally encoded numbers by numeric value</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+
+            <li>all other entries may be serialized in an arbitrary order</li>
+        </ul>
+    </li>
+</ul>
+
+<p>The string handling is equivalent to <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-quotejsonstring">ECMAScript 2015 QuoteJSONString</a>, but defined over utf-8 strings instead of utf-16 ones.</p>
+
+<p>The float handling is equivalent to (and quotes from) <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type">ECMAScript 2015 ToString Applied to the Number Type</a>, with step 5 replaced as specified in NOTE
+    2 to result in unique encodings. This spec provides a declarative description of the encoding process, for an algorithmic perspective, there are some papers on the subject such as:</p>
+
+<ul>
+    <li><a href="https://lists.nongnu.org/archive/html/gcl-devel/2012-10/pdfkieTlklRzN.pdf">Steele Jr, Guy L., and Jon L. White. "How to print floating-point numbers accurately." ACM SIGPLAN Notices. Vol. 25. No. 6. ACM, 1990.</a></li>
+
+    <li><a href="https://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf">Loitsch, Florian. "Printing floating-point numbers quickly and accurately with integers." ACM Sigplan Notices. Vol. 45. No. 6. ACM, 2010.</a></li>
+
+    <li><a href="https://cseweb.ucsd.edu/~lerner/papers/fp-printing-popl16.pdf">Andrysco, Marc, Ranjit Jhala, and Sorin Lerner. "Printing floating-point numbers: a faster, always correct method." ACM SIGPLAN Notices. Vol. 51. No. 1. ACM, 2016.</a></li>
+
+    <li><a href="https://dl.acm.org/citation.cfm?id=3192369">Adams, Ulf. "Ryū: fast float-to-string conversion." Proceedings of the 39th ACM SIGPLAN Conference on Programming Language Design and Implementation. ACM, 2018.</a></li>
+</ul>
+
+<p>The array and object handling is equivalent to <code>JSON.stringify(value, null, 2)</code>, specified in <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-json.stringify">ECMAScript 2015</a> (except for the object entry ordering, which is
+    not specified in ECMAScript, but implemented this way in v8 and spidermonkey).</p>
+
+<h5 id="dataformat-legacy-encoding-hash">Hash Computation</h5>
+
+<p>To compute the hash of a legacy value, you can not use the signing encoding directly, but the hash computation is based on it. The signing encoding always results in valid unicode. Represent this unicode in <a href="https://en.wikipedia.org/wiki/UTF-16">utf-16</a>.
+    This encoding is a sequence of code units, each consisting of two bytes. The data to hash is obtained from these code units by only keeping the less significant byte.</p>
+
+<p>Example: Suppose you want to compute the hash for <code>"ß"</code>, the corresponding utf8 is <code>[0x22, 0xC3, 0x9F, 0x22]</code>. In big-endian utf16, this is <code>[(0x22, 0x00), (0xDF, 0x00), (0x22, 0x00)]</code>, in little-endian utf16, this is
+    <code>[(0x00, 0x22), (0x00, 0xDF), (0x00, 0x22)]</code>. In both cases, the sequence of less signifiant bytes per code unit is <code>[0x22, 0xDF, 0x22]</code>. That is the byte array over which to compute the hash.</p>
+
+<p>Note that this means that two strings with different utf-8 encodings can result in the same hash, due to the information in the more significant byte of the utf-16 encoding being dropped.</p>
+
+<h5 id="dataformat-legacy-encoding-length">Length Computation</h5>
+
+<p>Ssb places a limit on the size of legacy messages. To compute the length of a legacy value, compute the signing encoding (which is always valid unicode), reencode that unicode as utf16, then count the number of code units.</p>
+
+<h5 id="dataformat-legacy-encoding-transport-json">JSON Transport Encoding</h5>
+
+<p>In addition to the signing format, legacy messages can be encoded as <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>, with the following differences:</p>
+
+<ul>
+    <li>numbers may not be negative zero</li>
+
+    <li>numbers may not round to positive infinity, negative infinity or negative zero IEEE 754 64 bit floating point numbers</li>
+
+    <li>strings may not be longer than <code>2^53 - 1</code> bytes</li>
+
+    <li>arrays and object may not contain more than <code>2^32 - 1</code> entries</li>
+
+    <li>objects may not contain multiple entries with the same key</li>
+
+    <li>in strings, unicode escape sequences of code points greater than <code>U+FFFF</code> must be interpreted as a single code point, not as an explicit surrogate pair</li>
+
+    <li>escape sequences of surrogate code points must be matched: Each escape sequence for a high surrogate must be followed by an escape sequence for a low surrogate, and any escape sequence for a low surrogate must be preceded by an escape sequence for
+        a high surrogate</li>
+</ul>
+
+<p>The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form has been used by the first ssb server implementations for message exchange with other servers.</p>
+
+<!-- ##### CBOR Encoding of Legacy Data
+A much more compact encoding for use in inter-server communication is based upon [CBOR (ietf rfc 7049)](https://tools.ietf.org/html/rfc7049), with the following differences:
+- The only allowed major types are:
+  - `3` (text string)
+  - `4` (array)
+  - `5` (map)
+  - `7` (primitives)
+- no indefinite length strings, arrays or maps (additional type `31` is not allowed)
+- the key data items in a map must be text strings (have major type `3`)
+- primitives are restricted to the following additional types:
+  - `20` (`false`)
+  - `21` (`true`)
+  - `22` (`null`)
+  - `27` (64-bit floats)
+  TODO: this needs to be much more precise-->
+
+<h3 id="metadata">Metadata</h3>
+
+<p>The metadata of ssb messages is used to construct the sigchains. Conceptually, to form the sigchain, the metadata of each message must include:</p>
+
+<ul>
+    <li>the feed the message belongs to</li>
+
+    <li>the hash of the previous message from the same feed, or <code>null</code></li>
+
+    <li>the free-form content of the message</li>
+
+    <li>a signature to prove that the author knew the private key of the feed</li>
+</ul>
+
+<p>The actual metadata formats also need to include some extra information. Just like the content data, there are both a legacy and a modern metadata format.</p>
+
+<!-- #### HSDT Metadata
+TODO -->
+
+<h4 id="metadata-legacy">Legacy Metadata</h4>
+
+<p>The abstract model for legacy metadata is a tuple containing the following entries:</p>
+
+<ul>
+    <li><code>previous</code>: either a <a href="TODO">multihash</a>, or the distinct value <code>null</code></li>
+
+    <li><code>author</code>: a <a href="TODO">multikey</a></li>
+
+    <li><code>sequence</code>: an unsigned 53 bit integer</li>
+
+    <li><code>timestamp</code>: an IEEE 754 64 bit float except the infinities, negative zero, and <code>NaN</code>s</li>
+
+    <li><code>content</code>: a <a href="TODO">legacy data value</a> that is either:
+
+
+        <ul>
+            <li>an object containing a entry <code>"type"</code>, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16</li>
+
+            <li>an encrypted message, encoded as a string which</li>
+
+            <li>begins with one or more alphanumeric characters, <code>/</code> or <code>+</code> (<code>0x2B, 0x2F, 0x30 - 0x39, 0x41 - 0x5A, 0x61 - 0x7A</code>)</li>
+
+            <li>followed by zero, one or two <code>=</code> characters (<code>0x3D</code>)</li>
+
+            <li>followed by the string <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
+
+            <li>followed by zero or more bytes of valid unicode</li>
+        </ul>
+    </li>
+
+    <li><code>swapped</code>: a boolean indicating how to encode the metadata</li>
+
+    <li><code>signature</code>: A signature of the message, generated by the cryptographic primitive of the <code>author</code>
+
+
+        <ul>
+            <li>this can only be computed once all other metadata is known</li>
+        </ul>
+    </li>
+</ul>
+
+<h5 id="metadata-legacy-encoding-json">Json Encoding</h5>
+
+<p>Legacy metadata can be encoded as json, just like regular legacy data. The json encoding is a json object containing the entries listed above, with the following additional regulations:</p>
+
+<ul>
+    <li>the <code>previous</code> multihash must use the <a href="TODO">legacy message hash encoding</a> as a string</li>
+
+    <li>the <code>author</code> multikey must use the legacy multikey encoding as a string</li>
+
+    <li>the <code>sequence</code> is serialized as a float, since that's the only number type available
+
+
+        <ul>
+            <li>it must not be negative</li>
+
+            <li>it must not contain a decimal point</li>
+        </ul>
+    </li>
+
+    <li>the <code>signature</code> value is a string whose content is the concatenation of:
+
+
+        <ul>
+            <li>the base64 encoding of the message's signature itself (see next section)</li>
+
+            <li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code> characters inside the data or after the necessary padding <code>=</code>s</li>
+
+            <li>the characters <code>.sig.</code> (<code>[0x2E, 0x73, 0x69, 0x67, 0x2E]</code>)</li>
+
+            <li>a primitive-specific suffix, depending of the primitive of the <code>author</code></li>
+
+            <li>for ed25519, this is <code>ed25519</code> (<code>[0x65, 0x64, 0x32, 0x35, 0x35, 0x31, 0x39]</code>)</li>
+        </ul>
+    </li>
+
+    <li>the <code>swapped</code> boolean is omitted</li>
+
+    <li>an entry <code>"hash": "sha256"</code> is added</li>
+
+    <li>if <code>swapped</code>, the order of entries must be <code>previous, sequence, author, timestamp, hash, content, signature</code>, else it must be <code>previous, author, sequence, timestamp, hash, content, signature</code></li>
+</ul>
+
+<p>When creating new messages, the (purely logical) value of <code>swapped</code> should be <code>false</code>. Or you might set it to <code>true</code>, or generate it randomly - nobody can stop you, and everything will still work.</p>
+
+<p>To this json encoding corresponds exactly one <a href="TODO">legacy data value</a>, obtained by decoding this json with the <a href="TODO">transport decoder</a>. This value is referred to as a <em>legacy message</em>.</p>
+
+<h5 id="metadata-legacy-signature">Computing a Legacy Message's Signature</h5>
+
+<p>To obtain the signature of a message, first compute the json encoding specified above, but without the <code>"signature"</code> entry. Then compute the signing encoding of the corresponding legacy data value, using the entry order of the json as a tie-breaker
+    for the entry-order of the signing encoding. Finally use the signing primitive of the message's <code>author</code> on the signing encoding, to obtain the signature.</p>
+
+<h5 id="metadata-legacy-hash">Computing the Hash of a Legacy Message</h5>
+
+<p>To compute the hash of a legacy message, use the <a href="TODO">legacy value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+
+<h5 id="metadata-legacy-size">Computing the Size of a Legacy Message</h5>
+
+<p>To compute the size of a legacy message, use the <a href="TODO">legacy value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+
+<h5 id="metadata-legacy-validation">Legacy Message Validation</h5>
+
+<p>A legacy message is considered valid if and only if all of the following conditions are met:</p>
+
+<ul>
+    <li>its json encoding is a possible output of the <a href="TODO">message creation algorithm</a>
+
+
+        <ul>
+            <li>in particular, the claimed signature must match the data and public key</li>
+        </ul>
+    </li>
+
+    <li>its length is smaller than <code>16385</code></li>
+</ul>
