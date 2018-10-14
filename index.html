@@ -23,7 +23,7 @@ TODO wait for feedback on %GrYD8mj3wV5s1bqknoYa+rsoeusSuT3sjPBaktTL7ps=.sha256 -
 
 <h4 id="multikey-encoding-legacy">Legacy Encoding</h4>
 
-<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multikeys as a json string. The encoding of a multikey is defined as the concatenation of:</p>
+<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The legacy encoding of a multikey is defined as the concatenation of:</p>
 
 <ul>
     <li>the character <code>@</code> (<code>0x40</code>)</li>
@@ -56,7 +56,7 @@ TODO wait for feedback on %GrYD8mj3wV5s1bqknoYa+rsoeusSuT3sjPBaktTL7ps=.sha256 -
 
 <h4 id="multihash-encoding-legacy">Legacy Encoding</h4>
 
-<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multihashes as a json string. The encoding of a multihash is defined as the concatenation of:</p>
+<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The legacy encoding of a multihash is defined as the concatenation of:</p>
 
 <ul>
     <li>either the character <code>%</code> (<code>0x25</code>) or the character <code>&amp;</code> (<code>0x26</code>)
@@ -491,15 +491,15 @@ TODO -->
 <p>The abstract model for legacy metadata is a tuple containing the following entries:</p>
 
 <ul>
-    <li><code>previous</code>: either a <a href="TODO">multihash</a>, or the distinct value <code>null</code></li>
+    <li><code>previous</code>: either a <a href="#multihash">multihash</a>, or the distinct value <code>null</code></li>
 
-    <li><code>author</code>: a <a href="TODO">multikey</a></li>
+    <li><code>author</code>: a <a href="#multikey">multikey</a></li>
 
     <li><code>sequence</code>: an unsigned 53 bit integer</li>
 
     <li><code>timestamp</code>: an IEEE 754 64 bit float except the infinities, negative zero, and <code>NaN</code>s</li>
 
-    <li><code>content</code>: a <a href="TODO">legacy data value</a> that is either:
+    <li><code>content</code>: a <a href="#dataformat-legacy-abstract">legacy data value</a> that is either:
 
 
         <ul>
@@ -533,9 +533,9 @@ TODO -->
 <p>Legacy metadata can be encoded as json, just like regular legacy data. The json encoding is a json object containing the entries listed above, with the following additional regulations:</p>
 
 <ul>
-    <li>the <code>previous</code> multihash must use the <a href="TODO">legacy message hash encoding</a> as a string</li>
+    <li>the <code>previous</code> multihash must be the <a href="#multihash-encoding-legacy">multihash legacy encoding</a> as a json string without escape sequences</li>
 
-    <li>the <code>author</code> multikey must use the legacy multikey encoding as a string</li>
+    <li>the <code>author</code> multikey must be the <a href="#multikey-encoding-legacy">multikey legacy encoding</a> as a json string without escape sequences</li>
 
     <li>the <code>sequence</code> is serialized as a float, since that's the only number type available
 
@@ -572,7 +572,7 @@ TODO -->
 
 <p>When creating new messages, the (purely logical) value of <code>swapped</code> should be <code>false</code>. Or you might set it to <code>true</code>, or generate it randomly - nobody can stop you, and everything will still work.</p>
 
-<p>To this json encoding corresponds exactly one <a href="TODO">legacy data value</a>, obtained by decoding this json with the <a href="TODO">transport decoder</a>. This value is referred to as a <em>legacy message</em>.</p>
+<p>To this json encoding corresponds exactly one <a href="#dataformat-legacy-abstract">legacy data value</a>, obtained by decoding this json with the <a href="#dataformat-legacy-encoding-transport-json">transport decoder</a>. This value is referred to as a <em>legacy message</em>.</p>
 
 <h5 id="metadata-legacy-signature">Computing a Legacy Message's Signature</h5>
 
@@ -581,18 +581,18 @@ TODO -->
 
 <h5 id="metadata-legacy-hash">Computing the Hash of a Legacy Message</h5>
 
-<p>To compute the hash of a legacy message, use the <a href="TODO">legacy value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<p>To compute the hash of a legacy message, use the <a href="#dataformat-legacy-encoding-hash">legacy value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
 
 <h5 id="metadata-legacy-size">Computing the Size of a Legacy Message</h5>
 
-<p>To compute the size of a legacy message, use the <a href="TODO">legacy value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<p>To compute the size of a legacy message, use the <a href="#dataformat-legacy-encoding-length">legacy value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
 
 <h5 id="metadata-legacy-validation">Legacy Message Validation</h5>
 
 <p>A legacy message is considered valid if and only if all of the following conditions are met:</p>
 
 <ul>
-    <li>its json encoding is a possible output of the <a href="TODO">message creation algorithm</a>
+    <li>its json encoding is a possible output of the <a href="metadata-legacy-encoding-json">legacy metadata encoding algorithm</a>
 
 
         <ul>
