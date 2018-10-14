@@ -24,12 +24,12 @@ A multikey is the public key of some [digital signature](https://en.wikipedia.or
 
 The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multikeys as a json string. The encoding of a multikey is defined as the concatenation of:
 
-- the character `@` (`40` in bytes)
+- the character `@` (`0x40`)
 - the base64 encoding of the key itself
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
-- the character `.` (`2E` in bytes)
+- the character `.` (`0x2E`)
 - the primitive-specific suffix
-  - for ed25519, this is `ed25519` (`65 64 32 35 35 31 39` in bytes)
+  - for ed25519, this is `ed25519` (`[0x65, 0x64, 0x32, 0x35, 0x35, 0x31, 0x39]`)
 
 Typically this is stored in a json string.
 
@@ -41,15 +41,15 @@ A multihash is the hash digest of some [cryptographically secure hash function](
 
 The legacy encoding is necessary to keep backwards-compatibility with old ssb data. It encodes multihashes as a json string. The encoding of a multihash is defined as the concatenation of:
 
-- either the character `%` (`25` in bytes) or the character `&` (`26` in bytes)
+- either the character `%` (`0x25`) or the character `&` (`0x26`)
   - this is sometimes used to distinguish between messages and blobs:
     - the encoding using `%` is called a (legacy) message (multi)hash
     - the encoding using `&` is called a (legacy) blob (multi)hash
 - the base64 encoding of the digest itself
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
-- the character `.` (`2E` in bytes)
+- the character `.` (`0x2E`)
 - the primitive-specific suffix
-  - for sha256, this is `sha256` (`73 68 61 32 35 36` in bytes)
+  - for sha256, this is `sha256` (`[0x73, 0x68, 0x61, 0x32, 0x35, 0x36]`)
 
 Typically this is stored in a json string.
 
@@ -127,25 +127,25 @@ The signing encoding is defined inductively as follows:
 
 ###### Base Cases
 
-- `null` is encoded as the utf-8 string `null` (`6E 75 6C 6C` in bytes)
-- `true` is encoded as the utf-8 string `true` (`74 72 75 65` in bytes)
-- `false` is encoded as the utf-8 string `false` (`66 61 6c 73 65` in bytes)
+- `null` is encoded as the utf-8 string `null` (`[0x6E, 0x75, 0x6C, 0x6C]`)
+- `true` is encoded as the utf-8 string `true` (`[0x74, 0x72, 0x75, 0x65]`)
+- `false` is encoded as the utf-8 string `false` (`[0x66, 0x61, 0x6c, 0x73, 0x65]`)
 - a utf8-string containing the code points `c_0, ..., c_n` is is encoded as follows:
-  - begin with the utf-8 string `"` (`22` in bytes)
+  - begin with the utf-8 string `"` (`0x22`)
   - for each code point `c_i` in `c_0, ..., c_n`:
-    - if `c_i` is unicode code point `0x000022` (quotation mark `"`), append the utf-8 string `\"` (`5C 22` in bytes)
-    - else if `c_i` is unicode code point `0x00005C` (reverse solidus `\`), append the utf-8 string `\\` (`5C 5C` in bytes)
-    - else if `c_i` is unicode code point `0x000008` (backspace), append the utf-8 string `\b` (`5C 62` in bytes)
-    - else if `c_i` is unicode code point `0x00000C` (form feed), append the utf-8 string `\f` (`5C 66` in bytes)
-    - else if `c_i` is unicode code point `0x00000A` (line feed), append the utf-8 string `\n` (`5C 6E` in bytes)
-    - else if `c_i` is unicode code point `0x00000D` (carriage return), append the utf-8 string `\r` (`5C 72` in bytes)
-    - else if `c_i` is unicode code point `0x000009` (line tabulation), append the utf-8 string `\t` (`5C 74` in bytes)
-    - else if `c_i` is a unicode code point below `0x000020` (space), append the utf-8 string `\u<hex>` (`5C 75 <hex>` in bytes), where `<hex>` are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters `a` - `f` (bytes `61` to `66`) for alphabetic hex digits
+    - if `c_i` is unicode code point `0x000022` (quotation mark `"`), append the utf-8 string `\"` (`[0x5C, 0x22]`)
+    - else if `c_i` is unicode code point `0x00005C` (reverse solidus `\`), append the utf-8 string `\\` (`[0x5C, 0x5C]`)
+    - else if `c_i` is unicode code point `0x000008` (backspace), append the utf-8 string `\b` (`[0x5C, 0x62]`)
+    - else if `c_i` is unicode code point `0x00000C` (form feed), append the utf-8 string `\f` (`[0x5C, 0x66]`)
+    - else if `c_i` is unicode code point `0x00000A` (line feed), append the utf-8 string `\n` (`[0x5C, 0x6E]`)
+    - else if `c_i` is unicode code point `0x00000D` (carriage return), append the utf-8 string `\r` (`[0x5C, 0x72]`)
+    - else if `c_i` is unicode code point `0x000009` (line tabulation), append the utf-8 string `\t` (`[0x5C, 0x74]`)
+    - else if `c_i` is a unicode code point below `0x000020` (space), append the utf-8 string `\u<hex>` (`[0x5C, 0x75, <hex>]`), where `<hex>` are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters `a` - `f` (`0x61` - `0x66`) for alphabetic hex digits
     - else append the utf-8 representation of `c_i` without any modifiations
-  - append the utf-8 string `"` (`22` in bytes)
+  - append the utf-8 string `"` (`0x22`)
 - a float `m` is encoded as follows:
-  - if `m == 0`, the encoding is the utf-8 string `0` (`30` in bytes)
-  - else if `m` is negative, the encoding is the utf-8 string `-<abs(m)>`(`2d <abs(m)>` in bytes), where `<abs(m)>` is the encoding of the same float with the sign bit flipped
+  - if `m == 0`, the encoding is the utf-8 string `0` (`0x30`)
+  - else if `m` is negative, the encoding is the utf-8 string `-<abs(m)>`(`[0x2d, <abs(m)>]`), where `<abs(m)>` is the encoding of the same float with the sign bit flipped
   - else (largely quoting from the [ECMAScript specification, applying NOTE 2](https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type) from here on):
     - let `n`, `k` and `s` be integers such that:
       - `k >= 1`
@@ -155,11 +155,11 @@ The signing encoding is defined inductively as follows:
       - if there are multiple values for `s`, choose the one for which `s * (10 ^ (n - k))` is closest in value to `m`
       - if there are two such possible values of `s`, choose the one that is even
       - Intuitively, `s` is the integer you get by removing the point ad all trailing zeros from the decimal representation of `m`, `k` is the number of digits in the decimal representation of `s`, and `n` specifies how to print the number: If `n` greater than `0`, there are `n` digits left of the point, else there are `abs(n)` many zeros right of the point. The choice of `s` uniquely determines `k` and `n`, the tricky part is finding a the `s` that rounds correctly and for which `k` is minimal.
-    - if `k <= n <= 21`, the encoding is the utf-8 string `<k_decimals><trailing_zeros>`, where `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`, and `<trailing_zeros` are `n - k` zero digits (`30` in bytes)
-    - else if `0 <= n <= 21`, the encoding is the utf-8 string `<pre_point>.<post_point>` (`<pre_point> 2E <post_point>` in bytes), where `<pre_point>` is the utf-8 encoding of the most significant `n` digits of the decimal representation of `s`, and `<post_point>` is the utf-8 encoding of the remaining `k - n` digits of the decimal representation of `s`
-    - else if `-6 < n <= 0`, the encoding is the utf-8 string `0.<zeros><k_decimals>` (`30 2E <zeros><k_decimals>` in bytes), where `<zeros>` are `-n` many zero digits (`30` in bytes), and `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`
-    - else if `k == 1`, the encoding is `<base>e<sign><exp>` (`<base> 65 <sign><exp>` in bytes), where `<base>` is the utf-8 encoding of the single digit of `s`, `<sign>` is the utf-8 string `+` (`2B` in bytes) if `n - 1` is positive or the utf-8 string `-` (`2D` in bytes) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
-    - else, the encoding is the utf-8 string `<pre_point>.<post_point>e<sign><exp>` (`<pre_point> 2E <post_point> 65 <sign><exp>`), where `<pre_point>` is the utf-8 encoding of the most significant digit of the decimal representation of `s`, `<post_point>` is the utf-8 encoding of the remaining `k - 1` digits of the decimal representation of `s`, `<sign>` is the utf-8 string `+` (`2B` in bytes) if `n - 1` is positive or the utf-8 string `-` (`2D` in bytes) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
+    - if `k <= n <= 21`, the encoding is the utf-8 string `<k_decimals><trailing_zeros>`, where `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`, and `<trailing_zeros` are `n - k` zero digits (`0x30`)
+    - else if `0 <= n <= 21`, the encoding is the utf-8 string `<pre_point>.<post_point>` (`[<pre_point>, 0x2E, <post_point>]`), where `<pre_point>` is the utf-8 encoding of the most significant `n` digits of the decimal representation of `s`, and `<post_point>` is the utf-8 encoding of the remaining `k - n` digits of the decimal representation of `s`
+    - else if `-6 < n <= 0`, the encoding is the utf-8 string `0.<zeros><k_decimals>` (`[0x30, 0x2E, <zeros>, <k_decimals>]`), where `<zeros>` are `-n` many zero digits (`0x30`), and `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`
+    - else if `k == 1`, the encoding is `<base>e<sign><exp>` (`[<base>, 0x65, <sign>, <exp>]`), where `<base>` is the utf-8 encoding of the single digit of `s`, `<sign>` is the utf-8 string `+` (`0x2B`) if `n - 1` is positive or the utf-8 string `-` (`0x2D`) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
+    - else, the encoding is the utf-8 string `<pre_point>.<post_point>e<sign><exp>` (`[<pre_point>, 0x2E, <post_point>, 0x65, <sign>, <exp>]`), where `<pre_point>` is the utf-8 encoding of the most significant digit of the decimal representation of `s`, `<post_point>` is the utf-8 encoding of the remaining `k - 1` digits of the decimal representation of `s`, `<sign>` is the utf-8 string `+` (`0x2B`) if `n - 1` is positive or the utf-8 string `-` (`0x2D`) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
 
 ###### Induction Hypotheses
 
@@ -168,40 +168,40 @@ Let `v_0, ..., v_n` be legacy values, and let `e_0(indent), ..., e_n(indent)` be
 ###### Inductive Step
 
 - An array `[v_0, ..., v_n]` is encoded as follows:
-  - if the array is empty (`n == 0`), the encoding is the utf-8 string `[]` (`5B 5D` in bytes)
+  - if the array is empty (`n == 0`), the encoding is the utf-8 string `[]` (`[0x5B, 0x5D]`)
   - else, do the following:
-    - begin with the utf-8 string `[<line feed>` (`5B 0A` in bytes)
+    - begin with the utf-8 string `[<line feed>` (`[0x5B, 0x0A]`)
     - for each `v_i` in `v_0, ..., v_(n - 1)` (so skip this if `n == 1`):
-      - append `indent + 2` many space characters (`20` in bytes)
+      - append `indent + 2` many space characters (`0x20`)
       - append `e_i(indent + 2)`
-      - append the utf-8 string `,<line feed>` (`2C 0A` in bytes)
-    - append `indent + 2` many space characters (`20` in bytes)
+      - append the utf-8 string `,<line feed>` (`[0x2C, 0x0A]`)
+    - append `indent + 2` many space characters (`0x20`)
     - append `e_n(indent + 2)`
-    - append the utf-8 string `<line feed>` (`0A` in bytes)
-    - append `indent` many space characters (`20` in bytes)
-    - append the utf-8 string `]` (`5D` in bytes)
+    - append the utf-8 string `<line feed>` (`0x0A`)
+    - append `indent` many space characters (`0x20`)
+    - append the utf-8 string `]` (`0x5D`)
 - An object `{ s_0: v_0, ..., s_n: v_n}` is encoded as follows:
-  - if the object is empty (`n == 0`), the encoding is the utf-8 string `{}` (`7B 7D` in bytes)
+  - if the object is empty (`n == 0`), the encoding is the utf-8 string `{}` (`[0x7B, 0x7D]`)
   - else, do the following:
-    - begin with the utf-8 string `{<line feed>` (`7B 0A` in bytes)
+    - begin with the utf-8 string `{<line feed>` (`[0x7B, 0x0A]`)
     - for each pair `(s_i, v_i)` for `i` in `0, ..., n - 1` (so skip this if `n == 1`):
-      - append `indent + 2` many space characters (`20` in bytes)
+      - append `indent + 2` many space characters (`0x20`)
       - append the encoding of the string `s_i`
-      - append the utf-8 string `:<space>` (`3A 20` in bytes)
+      - append the utf-8 string `:<space>` (`[0x3A, 0x20]`)
       - append `e_i(indent + 2)`
-      - append the utf-8 string `,<line feed>` (`2C 0A` in bytes)
-    - append `indent + 2` many space characters (`20` in bytes)
+      - append the utf-8 string `,<line feed>` (`[0x2C, 0x0A]`)
+    - append `indent + 2` many space characters (`0x20`)
     - append the encoding of the string `s_i`
-    - append the utf-8 string `:<space>` (`3A 20` in bytes)
+    - append the utf-8 string `:<space>` (`[0x3A, 0x20]`)
     - append `e_i(indent + 2)`
-    - append the utf-8 string `<line feed>` (`0A` in bytes)
-    - append `indent` many space characters (`20` in bytes)
-    - append the utf-8 string `}` (`7D` in bytes)
+    - append the utf-8 string `<line feed>` (`0x0A`)
+    - append `indent` many space characters (`0x20`)
+    - append the utf-8 string `}` (`0x7D`)
   - The order in which to serialize the entries `s_i: v_i` is not fully specified, but there are some constraints:
     - intuitively: Natural numbers are sorted ascendingly
     - formally:
-      - if there is an entry with the key `"0"` (`30` in bytes), the entry must be the first to be serialized
-      - all entries whose keys begin with a nonzero decimal digit (1 - 9, `31` - `39` in bytes) followed by zero or more arbitrary decimal digits (0 - 9, `30` - `39` in bytes) and consists solely of such digits, must be serialized before all other entries (but after an entry with key `"0"` if one exists). Amongst themselves, these keys are sorted:
+      - if there is an entry with the key `"0"` (`0x30`), the entry must be the first to be serialized
+      - all entries whose keys begin with a nonzero decimal digit (1 - 9 (`0x31` - `0x39`)) followed by zero or more arbitrary decimal digits (0 - 9 (`0x30` - `0x39`)) and consists solely of such digits, must be serialized before all other entries (but after an entry with key `"0"` if one exists). Amongst themselves, these keys are sorted:
         - by length first (ascending), using
         - numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
           - note that this coincides with sorting the decimally encoded numbers by numeric value
@@ -216,13 +216,13 @@ The float handling is equivalent to (and quotes from) [ECMAScript 2015 ToString 
 - [Andrysco, Marc, Ranjit Jhala, and Sorin Lerner. "Printing floating-point numbers: a faster, always correct method." ACM SIGPLAN Notices. Vol. 51. No. 1. ACM, 2016.](https://cseweb.ucsd.edu/~lerner/papers/fp-printing-popl16.pdf)
 - [Adams, Ulf. "Ryū: fast float-to-string conversion." Proceedings of the 39th ACM SIGPLAN Conference on Programming Language Design and Implementation. ACM, 2018.](https://dl.acm.org/citation.cfm?id=3192369)
 
-The array and object handling is equivalent to `JSON.stringify(value, null, 2)`, specified in [ECMAScript 2015](https://www.ecma-international.org/ecma-262/6.0/#sec-json.stringify).
+The array and object handling is equivalent to `JSON.stringify(value, null, 2)`, specified in [ECMAScript 2015](https://www.ecma-international.org/ecma-262/6.0/#sec-json.stringify) (except for the object entry ordering, which is not specified in ECMAScript, but implemented this way in v8 and spidermonkey).
 
 ##### Hash Computation
 
 To compute the hash of a legacy value, you can not use the signing encoding directly, but the hash computation is based on it. The signing encoding always results in valid unicode. Represent this unicode in [utf-16](https://en.wikipedia.org/wiki/UTF-16). This encoding is a sequence of code units, each consisting of two bytes. The data to hash is obtained from these code units by only keeping the less significant byte.
 
-Example: Suppose you want to compute the hash for `"ß"`, the corresponding utf8 is `[22, C3, 9F, 22]`. In big-endian utf16, this is `[(22, 0), (DF, 0), (22, 0)]`, in little-endian utf16, this is `[(0, 22), (0, DF), (0, 22)]`. In both cases, the sequence of less signifiant bytes per code unit is `[22, DF, 22]`. That is the byte array over which to compute the hash.
+Example: Suppose you want to compute the hash for `"ß"`, the corresponding utf8 is `[0x22, 0xC3, 0x9F, 0x22]`. In big-endian utf16, this is `[(0x22, 0x00), (0xDF, 0x00), (0x22, 0x00)]`, in little-endian utf16, this is `[(0x00, 0x22), (0x00, 0xDF), (0x00, 0x22)]`. In both cases, the sequence of less signifiant bytes per code unit is `[0x22, 0xDF, 0x22]`. That is the byte array over which to compute the hash.
 
 Note that this means that two strings with different utf-8 encodings can result in the same hash, due to the information in the more significant byte of the utf-16 encoding being dropped.
 
@@ -283,14 +283,14 @@ The abstract model for legacy metadata is a tuple containing the following entri
 
 - `previous`: either a [multihash](TODO), or the distinct value `null`
 - `author`: a [multikey](TODO)
-- `sequence`: a natural number
+- `sequence`: an unsigned 53 bit integer
 - `timestamp`: an IEEE 754 64 bit float except the infinities, negative zero, and `NaN`s
 - `content`: a [legacy data value](TODO) that is either:
   - an object containing a entry `"type"`, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16
   - an encrypted message, encoded as a string which
-    - begins with one or more alphanumeric characters, `/` or `+` (`2B, 2F, 30 ... 39, 41 ... 5A, 61 ... 7A, ` in bytes)
-    - followed by zero, one or two `=` characters (`3D`)
-    - followed by the string `.box` (`[2E, 62, 6F, 78]` in bytes)
+    - begins with one or more alphanumeric characters, `/` or `+` (`0x2B, 0x2F, 0x30 - 0x39, 0x41 - 0x5A, 0x61 - 0x7A`)
+    - followed by zero, one or two `=` characters (`0x3D`)
+    - followed by the string `.box` (`[0x2E, 0x62, 0x6F, 0x78]`)
     - followed by zero or more bytes of valid unicode
 - `swapped`: a boolean indicating how to encode the metadata
 - `signature`: A signature of the message, generated by the cryptographic primitive of the `author`
@@ -302,12 +302,15 @@ Legacy metadata can be encoded as json, just like regular legacy data. The json 
 
 - the `previous` multihash must use the [legacy message hash encoding](TODO) as a string
 - the `author` multikey must use the legacy multikey encoding as a string
-- the `signature` value is a string whoe content is the concatenation of:
+- the `sequence` is serialized as a float, since that's the only number type available
+  - it must not be negative
+  - it must not contain a decimal point
+- the `signature` value is a string whose content is the concatenation of:
   - the base64 encoding of the message's signature itself (see next section)
     - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
-  - the characters `.sig.` (`2E 73 69 67 2E` in bytes)
+  - the characters `.sig.` (`[0x2E, 0x73, 0x69, 0x67, 0x2E]`)
   - a primitive-specific suffix, depending of the primitive of the `author`
-    - for ed25519, this is `ed25519` (`65 64 32 35 35 31 39` in bytes)
+    - for ed25519, this is `ed25519` (`[0x65, 0x64, 0x32, 0x35, 0x35, 0x31, 0x39]`)
 - the `swapped` boolean is omitted
 - an entry `"hash": "sha256"` is added
 - if `swapped`, the order of entries must be `previous, sequence, author, timestamp, hash, content, signature`, else it must be `previous, author, sequence, timestamp, hash, content, signature`
