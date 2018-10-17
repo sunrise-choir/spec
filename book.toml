@@ -1,0 +1,6 @@
+[book]
+authors = ["AljoschaMeyer"]
+multilingual = false
+src = "src"
+title = "SSB Specification"
+description = "Specification of the ssb protocol."
