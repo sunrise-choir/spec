@@ -44,8 +44,7 @@ The abstract model for legacy metadata is a tuple containing the following entri
 - `content`: a [legacy data value](./datamodel.md#abstract-data-model) that is either:
   - an object containing an entry `"type"`, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16
   - an encrypted message, encoded as a string which
-    - begins with one or more alphanumeric characters, `/` or `+` (`0x2B, 0x2F, 0x30 - 0x39, 0x41 - 0x5A, 0x61 - 0x7A`)
-    - followed by zero, one or two `=` characters (`0x3D`)
+    - begins with [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) [ base64(ietf rfc 4648, section 4)](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
     - followed by the string `.box` (`[0x2E, 0x62, 0x6F, 0x78]`)
     - followed by zero or more bytes of valid unicode
 - `swapped`: a boolean indicating how to encode the metadata
@@ -62,7 +61,7 @@ Legacy metadata can be encoded as json, just like regular legacy data. The json 
   - it must not be negative
   - it must not contain a decimal point
 - the `signature` value is a string whose content is the concatenation of:
-  - the base64 encoding of the message's signature itself (see next section)
+  - the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the message's signature itself (see next section)
     - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
   - the characters `.sig.` (`[0x2E, 0x73, 0x69, 0x67, 0x2E]`)
   - a primitive-specific suffix, depending of the primitive of the `author`

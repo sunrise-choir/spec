@@ -15,7 +15,7 @@ A multikey is the public key of some [digital signature](https://en.wikipedia.or
 The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multikey is defined as the concatenation of:
 
 - the character `@` (`0x40`)
-- the base64 encoding of the key itself
+- the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the key itself
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
 - the character `.` (`0x2E`)
 - the primitive-specific suffix
@@ -35,7 +35,7 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
   - this is sometimes used to distinguish between messages and blobs:
     - the encoding using `%` is called a (legacy) message (multi)hash
     - the encoding using `&` is called a (legacy) blob (multi)hash
-- the base64 encoding of the digest itself
+- the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the digest itself
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
 - the character `.` (`0x2E`)
 - the primitive-specific suffix
