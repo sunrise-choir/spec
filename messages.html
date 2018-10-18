@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Feeds and Messages - SSB Specification</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="Specification of the ssb protocol.">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body class="light">
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">var path_to_root = "";</script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
+            if (theme === null || theme === undefined) { theme = 'light'; }
+            document.body.className = theme;
+            document.querySelector('html').className = theme + ' js';
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <ol class="chapter"><li class="affix"><a href="introduction.html">Introduction</a></li><li><a href="datatypes.html"><strong aria-hidden="true">1.</strong> Common Datatypes</a></li><li><a href="datamodel.html"><strong aria-hidden="true">2.</strong> Datamodel</a></li><li><a href="messages.html" class="active"><strong aria-hidden="true">3.</strong> Feeds and Messages</a></li></ol>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light <span class="default">(default)</span></button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title">SSB Specification</h1> 
+
+                        <div class="right-buttons">
+                            <a href="print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <a class="header" href="#feeds-and-messages" id="feeds-and-messages"><h1>Feeds and Messages</h1></a>
+<p>Ssb is designed around a data model optimized for simple data replication and strong cryptographic integrity guarantees in a social setting. The central entities in this model are <em>feeds</em> and <em>messages</em>. Messages are the pieces of data inserted into the system, feeds describe <em>who</em> authored a piece of data.</p>
+<p>Messages are carry schemaless, free-form <a href="./datamodel">pieces of data</a>, together with some metadata necessary for message replication and verification. Each message belongs to exactly one feed, and each message contains a backlink to the previous message posted to that feed. Feeds thus form linked lists. Links are implemented via <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">cryptographically secure hashes</a>, in that sense feeds behave mostly like blockchains. But whereas blockchains are traditionally used to create a global, single source of truth, ssb chooses a different approach.</p>
+<p>Instead of one single, global linked list for all data, each ssb user has their own linked list. To ensure that no malicious actor can append data to other user's list, all messages are <a href="https://en.wikipedia.org/wiki/Digital_signature">signed</a>. We call this data structure - a signed hash-based linked list - a <em>sigchain</em>.</p>
+<p>The sigchain-per-user design has some very desirable properties:</p>
+<ul>
+<li>data can be moved across untrusted machines, you still know that some piece of data has indeed be posted by a certain identity</li>
+<li>immutability of data, nothing gets lost</li>
+<li>the order between messages can not be confused</li>
+<li>replicating data becomes simple: just exchange the number of messages you know about for a certain feed, and your peer can send you everything that is newer</li>
+</ul>
+<p>Of course, this design also has some drawbacks:</p>
+<ul>
+<li>the simple replication scheme does not allow subscription to only parts of the data - it's all or nothing</li>
+<li>immutability and non-repudiation are not appropriate for all use-cases</li>
+<li>a single identity can not append data from multiple machines in parallel, as that would result in a tree rather than a linked list</li>
+</ul>
+<p>In some sense, ssb can be seen as an experiment whether the advantages of a sigchain-based distributed database outweigh the disadvantages. So far, it appears to be working sufficiently well.</p>
+<p>The remainder of this chapter describes the exact format of the metadata ssb maintains to build the sigchain. Conceptually, to form the sigchain, the metadata of each message must include:</p>
+<ul>
+<li>the feed the message belongs to</li>
+<li>the hash of the previous message from the same feed, or <code>null</code></li>
+<li>the free-form content of the message</li>
+<li>a signature to prove that the author knew the private key of the feed</li>
+</ul>
+<p>The actual metadata formats also need to include some extra information. Just like the content data, there is both a legacy and a modern metadata format, with the legacy format being supported for bakwards-compatibility.</p>
+<!-- #### HSDT Metadata
+TODO insert new format here -->
+<a class="header" href="#legacy-metadata" id="legacy-metadata"><h2>Legacy Metadata</h2></a>
+<p>The abstract model for legacy metadata is a tuple containing the following entries:</p>
+<ul>
+<li><code>previous</code>: either a <a href="./datatypes.html#multihash">multihash</a>, or the distinct value <code>null</code></li>
+<li><code>author</code>: a <a href="./datatypes.html#multikey">multikey</a></li>
+<li><code>sequence</code>: an unsigned 53 bit integer</li>
+<li><code>timestamp</code>: an IEEE 754 64 bit float except the infinities, negative zero, and <code>NaN</code>s</li>
+<li><code>content</code>: a <a href="./datamodel.html#abstract-data-model">legacy data value</a> that is either:
+<ul>
+<li>an object containing an entry <code>&quot;type&quot;</code>, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16</li>
+<li>an encrypted message, encoded as a string which
+<ul>
+<li>begins with <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> <a href="https://tools.ietf.org/html/rfc4648#section-4"> base64(ietf rfc 4648, section 4)</a>, disallowing superflous <code>=</code> characters inside the data or after the necessary padding <code>=</code>s</li>
+<li>followed by the string <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
+<li>followed by zero or more bytes of valid unicode</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>swapped</code>: a boolean indicating how to encode the metadata</li>
+<li><code>signature</code>: A signature of the message, generated by the cryptographic primitive of the <code>author</code>
+<ul>
+<li>this can only be computed once all other metadata is known</li>
+</ul>
+</li>
+</ul>
+<a class="header" href="#legacy-json-encoding" id="legacy-json-encoding"><h3>Legacy Json Encoding</h3></a>
+<p>Legacy metadata can be encoded as json, just like regular legacy data. The json encoding is a json object containing the entries listed above, with the following additional regulations:</p>
+<ul>
+<li>the <code>previous</code> multihash must use the <a href="./datatypes.html#multihash-legacy-encoding">legacy message hash encoding</a> as a string</li>
+<li>the <code>author</code> multikey must use the <a href="./datatypes.html#multikey-legacy-encoding">legacy multikey encoding</a> as a string</li>
+<li>the <code>sequence</code> is serialized as a float, since that's the only number type available
+<ul>
+<li>it must not be negative</li>
+<li>it must not contain a decimal point</li>
+</ul>
+</li>
+<li>the <code>signature</code> value is a string whose content is the concatenation of:
+<ul>
+<li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the message's signature itself (see next section)
+<ul>
+<li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code> characters inside the data or after the necessary padding <code>=</code>s</li>
+</ul>
+</li>
+<li>the characters <code>.sig.</code> (<code>[0x2E, 0x73, 0x69, 0x67, 0x2E]</code>)</li>
+<li>a primitive-specific suffix, depending of the primitive of the <code>author</code>
+<ul>
+<li>for ed25519, this is <code>ed25519</code> (<code>[0x65, 0x64, 0x32, 0x35, 0x35, 0x31, 0x39]</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>the <code>swapped</code> boolean is omitted</li>
+<li>an entry <code>&quot;hash&quot;: &quot;sha256&quot;</code> is added</li>
+<li>if <code>swapped</code>, the order of entries must be <code>previous, sequence, author, timestamp, hash, content, signature</code>, else it must be <code>previous, author, sequence, timestamp, hash, content, signature</code></li>
+</ul>
+<p>When creating new messages, the (purely logical) value of <code>swapped</code> should be <code>false</code>. Or you might set it to <code>true</code>, or generate it randomly - nobody can stop you, and everything will still work.</p>
+<p>To this json encoding corresponds exactly one legacy data value with a fixed order of object entries. This value is referred to as a <em>legacy message</em>.</p>
+<a class="header" href="#computing-a-legacy-messages-signature" id="computing-a-legacy-messages-signature"><h3>Computing a Legacy Message's Signature</h3></a>
+<p>To obtain the signature of a message, first compute the json encoding specified above, but without the <code>&quot;signature&quot;</code> entry. Then compute the signing encoding of the corresponding legacy data value, using the entry order of the json as a tie-breaker for the entry-order of the signing encoding. Finally use the signing primitive of the message's <code>author</code> on the signing encoding, to obtain the signature.</p>
+<a class="header" href="#computing-the-hash-of-a-legacy-message" id="computing-the-hash-of-a-legacy-message"><h3>Computing the Hash of a Legacy Message</h3></a>
+<p>To compute the hash of a legacy message, use the <a href="./datamode.html">legacy value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<a class="header" href="#computing-the-size-of-a-legacy-message" id="computing-the-size-of-a-legacy-message"><h3>Computing the Size of a Legacy Message</h3></a>
+<p>To compute the size of a legacy message, use the <a href="./datamode.html">legacy value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<a class="header" href="#legacy-message-validation" id="legacy-message-validation"><h3>Legacy Message Validation</h3></a>
+<p>A legacy message is considered valid if and only if all of the following conditions are met:</p>
+<ul>
+<li>its json encoding is a possible output of the <a href="#legacy-json-encoding">message creation algorithm</a>
+<ul>
+<li>in particular, the claimed signature must match the data and public key</li>
+</ul>
+</li>
+<li>its length is smaller than <code>16385</code></li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="datamodel.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a href="datamodel.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

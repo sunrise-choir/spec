@@ -1,0 +1,380 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Datamodel - SSB Specification</title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="Specification of the ssb protocol.">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body class="light">
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">var path_to_root = "";</script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
+            if (theme === null || theme === undefined) { theme = 'light'; }
+            document.body.className = theme;
+            document.querySelector('html').className = theme + ' js';
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <ol class="chapter"><li class="affix"><a href="introduction.html">Introduction</a></li><li><a href="datatypes.html"><strong aria-hidden="true">1.</strong> Common Datatypes</a></li><li><a href="datamodel.html" class="active"><strong aria-hidden="true">2.</strong> Datamodel</a></li><li><a href="messages.html"><strong aria-hidden="true">3.</strong> Feeds and Messages</a></li></ol>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light <span class="default">(default)</span></button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title">SSB Specification</h1> 
+
+                        <div class="right-buttons">
+                            <a href="print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <a class="header" href="#datamodel" id="datamodel"><h1>Datamodel</h1></a>
+<p>Ssb accepts schemaless data, adhering to a certain format specified in this section. This is the data that application developers care about. Internally, ssb then adds some more metadata to maintain the append-only logs, discussed in the <a href="./messages">next chapter</a>. This chapter only describes the data model of the schemaless content data.</p>
+<p>It is important to clearly distinguish between the abstract data model of a format, and various encodings. For example, the strings <code>1</code>, <code>1.0</code> and <code>0.1e1</code> are all different <a href="http://json.org/">json</a> encodings of the same abstract value. And there can even be different encoding formats for the same abstract value, e.g. the bytes <code>0xf93c00</code> also encode the floating point number 1.0, but in <a href="https://tools.ietf.org/html/rfc7049">cbor</a> rather than json.</p>
+<p>Ssb messages all use the same abstract data model, but there are different situations where they use different encodings. An encoding used for signing the data has different requirements than an encoding used for transmitting the data, which again has different requirements than an encoding used for persisten storage.</p>
+<p>Encodings for persistent storage are not specified in this document, but is crucial for all ssb implementations to compute the exact same signatures, and to send data in a format that can be understood by other implementations. We call these encodings <em>signing encoding</em> and <em>transport encoding</em> respectively.</p>
+<p>The ssb protocol was initially implemented in javascript, and it relied heavily on implicit behavior of the <a href="https://nodejs.org/en/">node js</a> runtime. It has since switched to a more carefully designed message format, but the old fomat still needs to be supported to keep backwards-compatibility.</p>
+<a class="header" href="#legacy-messages" id="legacy-messages"><h2>Legacy Messages</h2></a>
+<p>This section describes the message format that was originally used by ssb. The protocol has since moved on, everything here should be considered deprecated. But for backwards compatibility, ssb servers still need to understand, verify and relay old messages.</p>
+<p>Legacy messages have been deprecated because their design emerged organically through reliance on the default behavior of certain features of <a href="https://nodejs.org/en/">node js</a>. People (including the authors of this specification) have called the legacy message format &quot;bizarre&quot; and worse, and that is entirely justified. But when during reading you inevitably thing &quot;How could anybody end up with this, I could have done a much better job.&quot;, then remember: Maybe you could have, but you didn't.</p>
+<a class="header" href="#abstract-data-model" id="abstract-data-model"><h3>Abstract Data Model</h3></a>
+<p>The legacy data model describes all of the free-form data that can be carried in a legacy message. It is close to the <a href="http://json.org/">json</a> data model, but with a few differences. The definition came about as the set of javascript values created by <code>JSON.parse(json)</code> for which <a href="%EyGGCcjAbaShKFCMxXKYiZjQe17SR298D0SLTuKmZpo=.sha256"><code>json === JSON.stringify(JSON.parse(json))</code></a> (javascript code).</p>
+<p>Defined inductively in a language-agnostic way:</p>
+<a class="header" href="#base-cases" id="base-cases"><h6>Base Cases</h6></a>
+<ul>
+<li><code>null</code> is a legacy value, simply called <em>null</em></li>
+<li><code>true</code> and <code>false</code> are legacy values, called <em>booleans</em></li>
+<li>an ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a>  of length between <code>0</code> and <code>2^53 - 1</code> (inclusive) is a legacy value (may include null bytes, called a <em>utf8 string</em>)</li>
+<li>an <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> double precision (64 bit) floating point number that is none of <code>Infinity</code>, <code>-Infinity</code>, <code>-0</code> or <code>NaN</code> is a legacy value, called a <em>float</em></li>
+</ul>
+<a class="header" href="#induction-hypotheses" id="induction-hypotheses"><h6>Induction Hypotheses</h6></a>
+<p>Let <code>v_0, ..., v_n</code> be legacy values.</p>
+<a class="header" href="#inductive-step" id="inductive-step"><h6>Inductive Step</h6></a>
+<ul>
+<li>An ordered sequence <code>[v_0, ..., v_n]</code> where <code>n &lt; 2^32 - 1</code>, is a legacy value, called an <em>array</em></li>
+<li>An unordered set of at most <code>2^32 - 1</code> pairs of strings <code>s_i</code> (called <em>keys</em>) and legacy values <code>v_i</code> (called <em>values</em>), where all <code>s_i, s_j</code> are pairwise distinct, is a legacy value (called an <em>object</em>, written <code>{ &quot;foo&quot;: v_1, &quot;bar&quot;: v_2}</code>, the empty object is written as <code>{}</code>)</li>
+</ul>
+<a class="header" href="#signing-encoding" id="signing-encoding"><h3>Signing Encoding</h3></a>
+<p>The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.</p>
+<p>The signing encoding is defined inductively as follows:</p>
+<a class="header" href="#base-cases-1" id="base-cases-1"><h6>Base Cases</h6></a>
+<ul>
+<li><code>null</code> is encoded as the utf-8 string <code>null</code> (<code>[0x6E, 0x75, 0x6C, 0x6C]</code>)</li>
+<li><code>true</code> is encoded as the utf-8 string <code>true</code> (<code>[0x74, 0x72, 0x75, 0x65]</code>)</li>
+<li><code>false</code> is encoded as the utf-8 string <code>false</code> (<code>[0x66, 0x61, 0x6c, 0x73, 0x65]</code>)</li>
+<li>a utf8-string containing the code points <code>c_0, ..., c_n</code> is is encoded as follows:
+<ul>
+<li>begin with the utf-8 string <code>&quot;</code> (<code>0x22</code>)</li>
+<li>for each code point <code>c_i</code> in <code>c_0, ..., c_n</code>:
+<ul>
+<li>if <code>c_i</code> is unicode code point <code>0x000022</code> (quotation mark <code>&quot;</code>), append the utf-8 string <code>\&quot;</code> (<code>[0x5C, 0x22]</code>)</li>
+<li>else if <code>c_i</code> is unicode code point <code>0x00005C</code> (reverse solidus <code>\</code>), append the utf-8 string <code>\\</code> (<code>[0x5C, 0x5C]</code>)</li>
+<li>else if <code>c_i</code> is unicode code point <code>0x000008</code> (backspace), append the utf-8 string <code>\b</code> (<code>[0x5C, 0x62]</code>)</li>
+<li>else if <code>c_i</code> is unicode code point <code>0x00000C</code> (form feed), append the utf-8 string <code>\f</code> (<code>[0x5C, 0x66]</code>)</li>
+<li>else if <code>c_i</code> is unicode code point <code>0x00000A</code> (line feed), append the utf-8 string <code>\n</code> (<code>[0x5C, 0x6E]</code>)</li>
+<li>else if <code>c_i</code> is unicode code point <code>0x00000D</code> (carriage return), append the utf-8 string <code>\r</code> (<code>[0x5C, 0x72]</code>)</li>
+<li>else if <code>c_i</code> is unicode code point <code>0x000009</code> (line tabulation), append the utf-8 string <code>\t</code> (<code>[0x5C, 0x74]</code>)</li>
+<li>else if <code>c_i</code> is a unicode code point below <code>0x000020</code> (space), append the utf-8 string <code>\u&lt;hex&gt;</code> (<code>[0x5C, 0x75, &lt;hex&gt;]</code>), where <code>&lt;hex&gt;</code> are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters <code>a</code> - <code>f</code> (<code>0x61</code> - <code>0x66</code>) for alphabetic hex digits</li>
+<li>else append the utf-8 representation of <code>c_i</code> without any modifiations</li>
+</ul>
+</li>
+<li>append the utf-8 string <code>&quot;</code> (<code>0x22</code>)</li>
+</ul>
+</li>
+<li>a float <code>m</code> is encoded as follows:
+<ul>
+<li>if <code>m == 0</code>, the encoding is the utf-8 string <code>0</code> (<code>0x30</code>)</li>
+<li>else if <code>m</code> is negative, the encoding is the utf-8 string <code>-&lt;abs(m)&gt;</code>(<code>[0x2d, &lt;abs(m)&gt;]</code>), where <code>&lt;abs(m)&gt;</code> is the encoding of the same float with the sign bit flipped</li>
+<li>else (largely quoting from the <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type">ECMAScript specification, applying NOTE 2</a> from here on):
+<ul>
+<li>let <code>n</code>, <code>k</code> and <code>s</code> be integers such that:
+<ul>
+<li><code>k &gt;= 1</code></li>
+<li><code>10 ^ (k - 1) &lt;= s &lt;= 10 ^ k</code></li>
+<li><code>s * (10 ^ (n - k))</code> is <code>m</code> (or <a href="https://en.wikipedia.org/wiki/Rounding#Round_half_to_even">round-to-even-s</a> to <code>m</code> if it is not precisely representable in a 64 bit float)</li>
+<li><code>k</code> is as small as possible</li>
+<li>if there are multiple values for <code>s</code>, choose the one for which <code>s * (10 ^ (n - k))</code> is closest in value to <code>m</code></li>
+<li>if there are two such possible values of <code>s</code>, choose the one that is even</li>
+<li>Intuitively, <code>s</code> is the integer you get by removing the point ad all trailing zeros from the decimal representation of <code>m</code>, <code>k</code> is the number of digits in the decimal representation of <code>s</code>, and <code>n</code> specifies how to print the number: If <code>n</code> greater than <code>0</code>, there are <code>n</code> digits left of the point, else there are <code>abs(n)</code> many zeros right of the point. The choice of <code>s</code> uniquely determines <code>k</code> and <code>n</code>, the tricky part is finding a the <code>s</code> that rounds correctly and for which <code>k</code> is minimal.</li>
+</ul>
+</li>
+<li>if <code>k &lt;= n &lt;= 21</code>, the encoding is the utf-8 string <code>&lt;k_decimals&gt;&lt;trailing_zeros&gt;</code>, where <code>&lt;k_decimals&gt;</code> is the utf-8 encoding of the digits of the decimal representation of <code>s</code>, and <code>&lt;trailing_zeros</code> are <code>n - k</code> zero digits (<code>0x30</code>)</li>
+<li>else if <code>0 &lt;= n &lt;= 21</code>, the encoding is the utf-8 string <code>&lt;pre_point&gt;.&lt;post_point&gt;</code> (<code>[&lt;pre_point&gt;, 0x2E, &lt;post_point&gt;]</code>), where <code>&lt;pre_point&gt;</code> is the utf-8 encoding of the most significant <code>n</code> digits of the decimal representation of <code>s</code>, and <code>&lt;post_point&gt;</code> is the utf-8 encoding of the remaining <code>k - n</code> digits of the decimal representation of <code>s</code></li>
+<li>else if <code>-6 &lt; n &lt;= 0</code>, the encoding is the utf-8 string <code>0.&lt;zeros&gt;&lt;k_decimals&gt;</code> (<code>[0x30, 0x2E, &lt;zeros&gt;, &lt;k_decimals&gt;]</code>), where <code>&lt;zeros&gt;</code> are <code>-n</code> many zero digits (<code>0x30</code>), and <code>&lt;k_decimals&gt;</code> is the utf-8 encoding of the digits of the decimal representation of <code>s</code></li>
+<li>else if <code>k == 1</code>, the encoding is <code>&lt;base&gt;e&lt;sign&gt;&lt;exp&gt;</code> (<code>[&lt;base&gt;, 0x65, &lt;sign&gt;, &lt;exp&gt;]</code>), where <code>&lt;base&gt;</code> is the utf-8 encoding of the single digit of <code>s</code>, <code>&lt;sign&gt;</code> is the utf-8 string <code>+</code> (<code>0x2B</code>) if <code>n - 1</code> is positive or the utf-8 string <code>-</code> (<code>0x2D</code>) if <code>n - 1</code> is negative, and <code>&lt;exp&gt;</code> is the utf-8 encoding of the decimal representation of the absolute value of <code>n - 1</code></li>
+<li>else, the encoding is the utf-8 string <code>&lt;pre_point&gt;.&lt;post_point&gt;e&lt;sign&gt;&lt;exp&gt;</code> (<code>[&lt;pre_point&gt;, 0x2E, &lt;post_point&gt;, 0x65, &lt;sign&gt;, &lt;exp&gt;]</code>), where <code>&lt;pre_point&gt;</code> is the utf-8 encoding of the most significant digit of the decimal representation of <code>s</code>, <code>&lt;post_point&gt;</code> is the utf-8 encoding of the remaining <code>k - 1</code> digits of the decimal representation of <code>s</code>, <code>&lt;sign&gt;</code> is the utf-8 string <code>+</code> (<code>0x2B</code>) if <code>n - 1</code> is positive or the utf-8 string <code>-</code> (<code>0x2D</code>) if <code>n - 1</code> is negative, and <code>&lt;exp&gt;</code> is the utf-8 encoding of the decimal representation of the absolute value of <code>n - 1</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<a class="header" href="#induction-hypotheses-1" id="induction-hypotheses-1"><h6>Induction Hypotheses</h6></a>
+<p>Let <code>v_0, ..., v_n</code> be legacy values, and let <code>e_0(indent), ..., e_n(indent)</code> be the corresponding encodings using an indentation of <code>indent</code> many spaces. Initially, <code>indent</code> is <code>0</code>.</p>
+<a class="header" href="#inductive-step-1" id="inductive-step-1"><h6>Inductive Step</h6></a>
+<ul>
+<li>An array <code>[v_0, ..., v_n]</code> is encoded as follows:
+<ul>
+<li>if the array is empty (<code>n == 0</code>), the encoding is the utf-8 string <code>[]</code> (<code>[0x5B, 0x5D]</code>)</li>
+<li>else, do the following:
+<ul>
+<li>begin with the utf-8 string <code>[&lt;line feed&gt;</code> (<code>[0x5B, 0x0A]</code>)</li>
+<li>for each <code>v_i</code> in <code>v_0, ..., v_(n - 1)</code> (so skip this if <code>n == 1</code>):
+<ul>
+<li>append <code>indent + 2</code> many space characters (<code>0x20</code>)</li>
+<li>append <code>e_i(indent + 2)</code></li>
+<li>append the utf-8 string <code>,&lt;line feed&gt;</code> (<code>[0x2C, 0x0A]</code>)</li>
+</ul>
+</li>
+<li>append <code>indent + 2</code> many space characters (<code>0x20</code>)</li>
+<li>append <code>e_n(indent + 2)</code></li>
+<li>append the utf-8 string <code>&lt;line feed&gt;</code> (<code>0x0A</code>)</li>
+<li>append <code>indent</code> many space characters (<code>0x20</code>)</li>
+<li>append the utf-8 string <code>]</code> (<code>0x5D</code>)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>An object <code>{ s_0: v_0, ..., s_n: v_n}</code> is encoded as follows:
+<ul>
+<li>if the object is empty (<code>n == 0</code>), the encoding is the utf-8 string <code>{}</code> (<code>[0x7B, 0x7D]</code>)</li>
+<li>else, do the following:
+<ul>
+<li>begin with the utf-8 string <code>{&lt;line feed&gt;</code> (<code>[0x7B, 0x0A]</code>)</li>
+<li>for each pair <code>(s_i, v_i)</code> for <code>i</code> in <code>0, ..., n - 1</code> (so skip this if <code>n == 1</code>):
+<ul>
+<li>append <code>indent + 2</code> many space characters (<code>0x20</code>)</li>
+<li>append the encoding of the string <code>s_i</code></li>
+<li>append the utf-8 string <code>:&lt;space&gt;</code> (<code>[0x3A, 0x20]</code>)</li>
+<li>append <code>e_i(indent + 2)</code></li>
+<li>append the utf-8 string <code>,&lt;line feed&gt;</code> (<code>[0x2C, 0x0A]</code>)</li>
+</ul>
+</li>
+<li>append <code>indent + 2</code> many space characters (<code>0x20</code>)</li>
+<li>append the encoding of the string <code>s_i</code></li>
+<li>append the utf-8 string <code>:&lt;space&gt;</code> (<code>[0x3A, 0x20]</code>)</li>
+<li>append <code>e_i(indent + 2)</code></li>
+<li>append the utf-8 string <code>&lt;line feed&gt;</code> (<code>0x0A</code>)</li>
+<li>append <code>indent</code> many space characters (<code>0x20</code>)</li>
+<li>append the utf-8 string <code>}</code> (<code>0x7D</code>)</li>
+</ul>
+</li>
+<li>The order in which to serialize the entries <code>s_i: v_i</code> is not fully specified, but there are some constraints:
+<ul>
+<li>intuitively: Natural numbers are sorted ascendingly</li>
+<li>formally:
+<ul>
+<li>if there is an entry with the key <code>&quot;0&quot;</code> (<code>0x30</code>), the entry must be the first to be serialized</li>
+<li>all entries whose keys begin with a nonzero decimal digit (1 - 9 (<code>0x31</code> - <code>0x39</code>)) followed by zero or more arbitrary decimal digits (0 - 9 (<code>0x30</code> - <code>0x39</code>)) and consists solely of such digits, must be serialized before all other entries (but after an entry with key <code>&quot;0&quot;</code> if one exists). Amongst themselves, these keys are sorted:
+<ul>
+<li>by length first (ascending), using</li>
+<li>numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
+<ul>
+<li>note that this coincides with sorting the decimally encoded numbers by numeric value</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>all other entries may be serialized in an arbitrary order</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The string handling is equivalent to <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-quotejsonstring">ECMAScript 2015 QuoteJSONString</a>, but defined over utf-8 strings instead of utf-16 ones.</p>
+<p>The float handling is equivalent to (and quotes from) <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type">ECMAScript 2015 ToString Applied to the Number Type</a>, with step 5 replaced as specified in NOTE 2 to result in unique encodings. This spec provides a declarative description of the encoding process, for an algorithmic perspective, there are some papers on the subject such as:</p>
+<ul>
+<li><a href="https://lists.nongnu.org/archive/html/gcl-devel/2012-10/pdfkieTlklRzN.pdf">Steele Jr, Guy L., and Jon L. White. &quot;How to print floating-point numbers accurately.&quot; ACM SIGPLAN Notices. Vol. 25. No. 6. ACM, 1990.</a></li>
+<li><a href="https://www.cs.tufts.edu/%7Enr/cs257/archive/florian-loitsch/printf.pdf">Loitsch, Florian. &quot;Printing floating-point numbers quickly and accurately with integers.&quot; ACM Sigplan Notices. Vol. 45. No. 6. ACM, 2010.</a></li>
+<li><a href="https://cseweb.ucsd.edu/%7Elerner/papers/fp-printing-popl16.pdf">Andrysco, Marc, Ranjit Jhala, and Sorin Lerner. &quot;Printing floating-point numbers: a faster, always correct method.&quot; ACM SIGPLAN Notices. Vol. 51. No. 1. ACM, 2016.</a></li>
+<li><a href="https://dl.acm.org/citation.cfm?id=3192369">Adams, Ulf. &quot;Ryū: fast float-to-string conversion.&quot; Proceedings of the 39th ACM SIGPLAN Conference on Programming Language Design and Implementation. ACM, 2018.</a></li>
+</ul>
+<p>The array and object handling is equivalent to <code>JSON.stringify(value, null, 2)</code>, specified in <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-json.stringify">ECMAScript 2015</a> (except for the object entry ordering, which is not specified in ECMAScript, but implemented this way in v8 and spidermonkey).</p>
+<a class="header" href="#legacy-hash-computation" id="legacy-hash-computation"><h3>Legacy Hash Computation</h3></a>
+<p>To compute the hash of a legacy value, you can not use the signing encoding directly, but the hash computation is based on it. The signing encoding always results in valid unicode. Represent this unicode in <a href="https://en.wikipedia.org/wiki/UTF-16">utf-16</a>. This encoding is a sequence of code units, each consisting of two bytes. The data to hash is obtained from these code units by only keeping the less significant byte.</p>
+<p>Example: Suppose you want to compute the hash for <code>&quot;ß&quot;</code>, the corresponding utf8 is <code>[0x22, 0xC3, 0x9F, 0x22]</code>. In big-endian utf16, this is <code>[(0x22, 0x00), (0xDF, 0x00), (0x22, 0x00)]</code>, in little-endian utf16, this is <code>[(0x00, 0x22), (0x00, 0xDF), (0x00, 0x22)]</code>. In both cases, the sequence of less signifiant bytes per code unit is <code>[0x22, 0xDF, 0x22]</code>. That is the byte array over which to compute the hash.</p>
+<p>Note that this means that two strings with different utf-8 encodings can result in the same hash, due to the information in the more significant byte of the utf-16 encoding being dropped.</p>
+<a class="header" href="#legacy-length-computation" id="legacy-length-computation"><h3>Legacy Length Computation</h3></a>
+<p>Ssb places a limit on the size of legacy messages. To compute the length of a legacy value, compute the signing encoding (which is always valid unicode), reencode that unicode as utf16, then count the number of code units.</p>
+<a class="header" href="#json-transport-encoding" id="json-transport-encoding"><h3>JSON Transport Encoding</h3></a>
+<p>In addition to the signing format, legacy messages can be encoded as <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>, with the following differences:</p>
+<ul>
+<li>numbers may not be negative zero</li>
+<li>numbers may not round to positive infinity, negative infinity or negative zero IEEE 754 64 bit floating point numbers</li>
+<li>strings may not be longer than <code>2^53 - 1</code> bytes</li>
+<li>arrays and object may not contain more than <code>2^32 - 1</code> entries</li>
+<li>objects may not contain multiple entries with the same key</li>
+<li>in strings, unicode escape sequences of code points greater than <code>U+FFFF</code> must be interpreted as a single code point, not as an explicit surrogate pair</li>
+<li>escape sequences of surrogate code points must be matched: Each escape sequence for a high surrogate must be followed by an escape sequence for a low surrogate, and any escape sequence for a low surrogate must be preceded by an escape sequence for a high surrogate</li>
+</ul>
+<p>The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form has been used by the first ssb server implementations for message exchange with other servers.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="datatypes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="messages.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a href="datatypes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a href="messages.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>
