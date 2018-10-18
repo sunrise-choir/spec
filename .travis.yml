@@ -1,0 +1,20 @@
+language: rust
+sudo: false
+cache:
+- cargo
+rust:
+- stable
+before_script:
+- "(test -x $HOME/.cargo/bin/cargo-install-update || cargo install cargo-update)"
+- (test -x $HOME/.cargo/bin/mdbook || cargo install --vers "^0.1" mdbook)
+- cargo install-update -a
+script:
+- cd . && mdbook build && mdbook test
+deploy:
+  - provider: script
+    skip_cleanup: true # do not delete the built assets
+    script: ./.travis/deploy.sh
+    on:
+      branch: master
+notifications:
+  email: false
