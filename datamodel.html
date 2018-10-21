@@ -147,30 +147,31 @@
 <p>Legacy messages have been deprecated because their design emerged organically through reliance on the default behavior of certain features of <a href="https://nodejs.org/en/">node js</a>. People (including the authors of this specification) have called the legacy message format &quot;bizarre&quot; and worse, and that is entirely justified. But when during reading you inevitably thing &quot;How could anybody end up with this, I could have done a much better job.&quot;, then remember: Maybe you could have, but you didn't.</p>
 <a class="header" href="#abstract-data-model" id="abstract-data-model"><h3>Abstract Data Model</h3></a>
 <p>The legacy data model describes all of the free-form data that can be carried in a legacy message. It is close to the <a href="http://json.org/">json</a> data model, but with a few differences. The definition came about as the set of javascript values created by <code>JSON.parse(json)</code> for which <a href="%EyGGCcjAbaShKFCMxXKYiZjQe17SR298D0SLTuKmZpo=.sha256"><code>json === JSON.stringify(JSON.parse(json))</code></a> (javascript code).</p>
-<p>Defined inductively in a language-agnostic way:</p>
-<a class="header" href="#base-cases" id="base-cases"><h6>Base Cases</h6></a>
-<ul>
-<li><code>null</code> is a legacy value, simply called <em>null</em></li>
-<li><code>true</code> and <code>false</code> are legacy values, called <em>booleans</em></li>
-<li>an ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a>  of length between <code>0</code> and <code>2^53 - 1</code> (inclusive) is a legacy value (may include null bytes, called a <em>utf8 string</em>)</li>
-<li>an <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> double precision (64 bit) floating point number that is none of <code>Infinity</code>, <code>-Infinity</code>, <code>-0</code> or <code>NaN</code> is a legacy value, called a <em>float</em></li>
-</ul>
-<a class="header" href="#induction-hypotheses" id="induction-hypotheses"><h6>Induction Hypotheses</h6></a>
-<p>Let <code>v_0, ..., v_n</code> be legacy values.</p>
-<a class="header" href="#inductive-step" id="inductive-step"><h6>Inductive Step</h6></a>
-<ul>
-<li>An ordered sequence <code>[v_0, ..., v_n]</code> where <code>n &lt; 2^32 - 1</code>, is a legacy value, called an <em>array</em></li>
-<li>An unordered set of at most <code>2^32 - 1</code> pairs of strings <code>s_i</code> (called <em>keys</em>) and legacy values <code>v_i</code> (called <em>values</em>), where all <code>s_i, s_j</code> are pairwise distinct, is a legacy value (called an <em>object</em>, written <code>{ &quot;foo&quot;: v_1, &quot;bar&quot;: v_2}</code>, the empty object is written as <code>{}</code>)</li>
-</ul>
+<p>Defined in a language-agnostic way:</p>
+<a class="header" href="#null" id="null"><h6>Null</h6></a>
+<p><code>null</code> is a legacy value that carries <a href="https://en.wikipedia.org/wiki/Unit_type">no information</a>.</p>
+<a class="header" href="#booleans" id="booleans"><h6>Booleans</h6></a>
+<p><code>true</code> and <code>false</code> are legacy values, called <em>booleans</em>.</p>
+<a class="header" href="#strings" id="strings"><h6>Strings</h6></a>
+<p>An ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a> of length between <code>0</code> and <code>2^53 - 1</code> (inclusive) is a legacy value, called a <em>string</em>. Such a string may include null bytes.</p>
+<a class="header" href="#floats" id="floats"><h6>Floats</h6></a>
+<p>An <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> double precision (64 bit) floating point number that is none of <code>Infinity</code>, <code>-Infinity</code>, <code>-0</code> or <code>NaN</code> is a legacy value, called a <em>float</em>.</p>
+<a class="header" href="#arrays" id="arrays"><h6>Arrays</h6></a>
+<p>Let <code>n</code> be a natural number less than <code>2^32</code>, and let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>.</p>
+<p>The ordered sequence <code>[v_0, ..., v_n]</code> is a legacy value, called an <em>array</em>.</p>
+<a class="header" href="#objects" id="objects"><h6>Objects</h6></a>
+<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>s_0, ..., s_n</code> be pairwise distinct <a href="#strings">strings</a>, and let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>.</p>
+<p>The (unordered) set of pairs <code>(s_i, s_i)</code> for all <code>0 &lt;= i &lt;= n</code> is a legacy value, called a <em>object</em>. The pairs are called <em>entries</em>, the strings are called <em>keys</em>, and the legacy values are called <em>values</em>.</p>
 <a class="header" href="#signing-encoding" id="signing-encoding"><h3>Signing Encoding</h3></a>
-<p>The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.</p>
-<p>The signing encoding is defined inductively as follows:</p>
-<a class="header" href="#base-cases-1" id="base-cases-1"><h6>Base Cases</h6></a>
-<ul>
-<li><code>null</code> is encoded as the utf-8 string <code>null</code> (<code>[0x6E, 0x75, 0x6C, 0x6C]</code>)</li>
-<li><code>true</code> is encoded as the utf-8 string <code>true</code> (<code>[0x74, 0x72, 0x75, 0x65]</code>)</li>
-<li><code>false</code> is encoded as the utf-8 string <code>false</code> (<code>[0x66, 0x61, 0x6c, 0x73, 0x65]</code>)</li>
-<li>a utf8-string containing the code points <code>c_0, ..., c_n</code> is is encoded as follows:
+<p>The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the freely-orderable object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.</p>
+<p>The signing encoding is defined as follows:</p>
+<a class="header" href="#signing-encoding-null" id="signing-encoding-null"><h6>Signing Encoding Null</h6></a>
+<p><code>null</code> is encoded as the utf-8 string <code>null</code> (<code>[0x6E, 0x75, 0x6C, 0x6C]</code>).</p>
+<a class="header" href="#signing-encoding-booleans" id="signing-encoding-booleans"><h6>Signing Encoding Booleans</h6></a>
+<p><code>true</code> is encoded as the utf-8 string <code>true</code> (<code>[0x74, 0x72, 0x75, 0x65]</code>).<br />
+<code>false</code> is encoded as the utf-8 string <code>false</code> (<code>[0x66, 0x61, 0x6c, 0x73, 0x65]</code>).</p>
+<a class="header" href="#signing-encoding-strings" id="signing-encoding-strings"><h6>Signing Encoding Strings</h6></a>
+<p>A string containing the unicode code points <code>c_0, ..., c_n</code> is is encoded as follows:</p>
 <ul>
 <li>begin with the utf-8 string <code>&quot;</code> (<code>0x22</code>)</li>
 <li>for each code point <code>c_i</code> in <code>c_0, ..., c_n</code>:
@@ -188,8 +189,8 @@
 </li>
 <li>append the utf-8 string <code>&quot;</code> (<code>0x22</code>)</li>
 </ul>
-</li>
-<li>a float <code>m</code> is encoded as follows:
+<a class="header" href="#signing-encoding-floats" id="signing-encoding-floats"><h6>Signing Encoding Floats</h6></a>
+<p>A float <code>m</code> is encoded as follows:</p>
 <ul>
 <li>if <code>m == 0</code>, the encoding is the utf-8 string <code>0</code> (<code>0x30</code>)</li>
 <li>else if <code>m</code> is negative, the encoding is the utf-8 string <code>-&lt;abs(m)&gt;</code>(<code>[0x2d, &lt;abs(m)&gt;]</code>), where <code>&lt;abs(m)&gt;</code> is the encoding of the same float with the sign bit flipped</li>
@@ -214,13 +215,9 @@
 </ul>
 </li>
 </ul>
-</li>
-</ul>
-<a class="header" href="#induction-hypotheses-1" id="induction-hypotheses-1"><h6>Induction Hypotheses</h6></a>
-<p>Let <code>v_0, ..., v_n</code> be legacy values, and let <code>e_0(indent), ..., e_n(indent)</code> be the corresponding encodings using an indentation of <code>indent</code> many spaces. Initially, <code>indent</code> is <code>0</code>.</p>
-<a class="header" href="#inductive-step-1" id="inductive-step-1"><h6>Inductive Step</h6></a>
-<ul>
-<li>An array <code>[v_0, ..., v_n]</code> is encoded as follows:
+<a class="header" href="#signing-encoding-arrays" id="signing-encoding-arrays"><h6>Signing Encoding Arrays</h6></a>
+<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>, and let <code>e_0, ..., e_n</code> be functions that take a natural number as an argument and return the <a href="#signing-encoding">encodings</a> of <code>v_0, ..., v_n</code> respectively using the supplied number as the indentation level.</p>
+<p>At indentation level <code>indent</code>, the array <code>[v_0, ..., v_n]</code> is encoded as follows:</p>
 <ul>
 <li>if the array is empty (<code>n == 0</code>), the encoding is the utf-8 string <code>[]</code> (<code>[0x5B, 0x5D]</code>)</li>
 <li>else, do the following:
@@ -241,8 +238,9 @@
 </ul>
 </li>
 </ul>
-</li>
-<li>An object <code>{ s_0: v_0, ..., s_n: v_n}</code> is encoded as follows:
+<a class="header" href="#signing-encoding-objects" id="signing-encoding-objects"><h6>Signing Encoding Objects</h6></a>
+<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>s_0, ..., s_n</code> be pairwise distinct <a href="#strings">strings</a>, let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>, and let <code>e_0, ..., e_n</code> be functions that take a natural number as an argument and return the <a href="#signing-encoding">encodings</a> of <code>v_0, ..., v_n</code> respectively using the supplied number as the indentation level.</p>
+<p>At indentation level <code>indent</code>, the object <code>{ s_0: v_0, ..., s_n: v_n}</code> is encoded as follows:</p>
 <ul>
 <li>if the object is empty (<code>n == 0</code>), the encoding is the utf-8 string <code>{}</code> (<code>[0x7B, 0x7D]</code>)</li>
 <li>else, do the following:
@@ -285,8 +283,6 @@
 </ul>
 </li>
 <li>all other entries may be serialized in an arbitrary order</li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
