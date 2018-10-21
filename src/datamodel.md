@@ -20,111 +20,130 @@ Legacy messages have been deprecated because their design emerged organically th
 
 The legacy data model describes all of the free-form data that can be carried in a legacy message. It is close to the [json](http://json.org/) data model, but with a few differences. The definition came about as the set of javascript values created by `JSON.parse(json)` for which [`json === JSON.stringify(JSON.parse(json))`](%EyGGCcjAbaShKFCMxXKYiZjQe17SR298D0SLTuKmZpo=.sha256) (javascript code).
 
-Defined inductively in a language-agnostic way:
+Defined in a language-agnostic way:
 
-###### Base Cases
+###### Null
+`null` is a legacy value that carries [no information](https://en.wikipedia.org/wiki/Unit_type).
 
-- `null` is a legacy value, simply called *null*
-- `true` and `false` are legacy values, called *booleans*
-- an ordered sequence of bytes which form valid [utf8](https://en.wikipedia.org/wiki/UTF-8)  of length between `0` and `2^53 - 1` (inclusive) is a legacy value (may include null bytes, called a *utf8 string*)
-- an [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754) double precision (64 bit) floating point number that is none of `Infinity`, `-Infinity`, `-0` or `NaN` is a legacy value, called a *float*
+###### Booleans
+`true` and `false` are legacy values, called *booleans*.
 
-###### Induction Hypotheses
+###### Strings
+An ordered sequence of bytes which form valid [utf8](https://en.wikipedia.org/wiki/UTF-8) of length between `0` and `2^53 - 1` (inclusive) is a legacy value, called a *string*. Such a string may include null bytes.
 
-Let `v_0, ..., v_n` be legacy values.
+###### Floats
+An [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754) double precision (64 bit) floating point number that is none of `Infinity`, `-Infinity`, `-0` or `NaN` is a legacy value, called a *float*.
 
-###### Inductive Step
+###### Arrays
+Let `n` be a natural number less than `2^32`, and let `v_0, ..., v_n` be [legacy values](#abstract-data-model).
 
-- An ordered sequence `[v_0, ..., v_n]` where `n < 2^32 - 1`, is a legacy value, called an *array*
-- An unordered set of at most `2^32 - 1` pairs of strings `s_i` (called *keys*) and legacy values `v_i` (called *values*), where all `s_i, s_j` are pairwise distinct, is a legacy value (called an *object*, written `{ "foo": v_1, "bar": v_2}`, the empty object is written as `{}`)
+The ordered sequence `[v_0, ..., v_n]` is a legacy value, called an *array*.
+
+###### Objects
+Let `n` be a natural number less than `2^32`, let `s_0, ..., s_n` be pairwise distinct [strings](#strings), and let `v_0, ..., v_n` be [legacy values](#abstract-data-model).
+
+The (unordered) set of pairs `(s_i, s_i)` for all `0 <= i <= n` is a legacy value, called a *object*. The pairs are called *entries*, the strings are called *keys*, and the legacy values are called *values*.
 
 ### Signing Encoding
 
-The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf)). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.
+The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of [ECMA-404 json](https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf)). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the freely-orderable object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.
 
-The signing encoding is defined inductively as follows:
+The signing encoding is defined as follows:
 
-###### Base Cases
+###### Signing Encoding Null
+`null` is encoded as the utf-8 string `null` (`[0x6E, 0x75, 0x6C, 0x6C]`).
 
-- `null` is encoded as the utf-8 string `null` (`[0x6E, 0x75, 0x6C, 0x6C]`)
-- `true` is encoded as the utf-8 string `true` (`[0x74, 0x72, 0x75, 0x65]`)
-- `false` is encoded as the utf-8 string `false` (`[0x66, 0x61, 0x6c, 0x73, 0x65]`)
-- a utf8-string containing the code points `c_0, ..., c_n` is is encoded as follows:
-  - begin with the utf-8 string `"` (`0x22`)
-  - for each code point `c_i` in `c_0, ..., c_n`:
-    - if `c_i` is unicode code point `0x000022` (quotation mark `"`), append the utf-8 string `\"` (`[0x5C, 0x22]`)
-    - else if `c_i` is unicode code point `0x00005C` (reverse solidus `\`), append the utf-8 string `\\` (`[0x5C, 0x5C]`)
-    - else if `c_i` is unicode code point `0x000008` (backspace), append the utf-8 string `\b` (`[0x5C, 0x62]`)
-    - else if `c_i` is unicode code point `0x00000C` (form feed), append the utf-8 string `\f` (`[0x5C, 0x66]`)
-    - else if `c_i` is unicode code point `0x00000A` (line feed), append the utf-8 string `\n` (`[0x5C, 0x6E]`)
-    - else if `c_i` is unicode code point `0x00000D` (carriage return), append the utf-8 string `\r` (`[0x5C, 0x72]`)
-    - else if `c_i` is unicode code point `0x000009` (line tabulation), append the utf-8 string `\t` (`[0x5C, 0x74]`)
-    - else if `c_i` is a unicode code point below `0x000020` (space), append the utf-8 string `\u<hex>` (`[0x5C, 0x75, <hex>]`), where `<hex>` are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters `a` - `f` (`0x61` - `0x66`) for alphabetic hex digits
-    - else append the utf-8 representation of `c_i` without any modifiations
-  - append the utf-8 string `"` (`0x22`)
-- a float `m` is encoded as follows:
-  - if `m == 0`, the encoding is the utf-8 string `0` (`0x30`)
-  - else if `m` is negative, the encoding is the utf-8 string `-<abs(m)>`(`[0x2d, <abs(m)>]`), where `<abs(m)>` is the encoding of the same float with the sign bit flipped
-  - else (largely quoting from the [ECMAScript specification, applying NOTE 2](https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type) from here on):
-    - let `n`, `k` and `s` be integers such that:
-      - `k >= 1`
-      - `10 ^ (k - 1) <= s <= 10 ^ k`
-      - `s * (10 ^ (n - k))` is `m` (or [round-to-even-s](https://en.wikipedia.org/wiki/Rounding#Round_half_to_even) to `m` if it is not precisely representable in a 64 bit float)
-      - `k` is as small as possible
-      - if there are multiple values for `s`, choose the one for which `s * (10 ^ (n - k))` is closest in value to `m`
-      - if there are two such possible values of `s`, choose the one that is even
-      - Intuitively, `s` is the integer you get by removing the point ad all trailing zeros from the decimal representation of `m`, `k` is the number of digits in the decimal representation of `s`, and `n` specifies how to print the number: If `n` greater than `0`, there are `n` digits left of the point, else there are `abs(n)` many zeros right of the point. The choice of `s` uniquely determines `k` and `n`, the tricky part is finding a the `s` that rounds correctly and for which `k` is minimal.
-    - if `k <= n <= 21`, the encoding is the utf-8 string `<k_decimals><trailing_zeros>`, where `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`, and `<trailing_zeros` are `n - k` zero digits (`0x30`)
-    - else if `0 <= n <= 21`, the encoding is the utf-8 string `<pre_point>.<post_point>` (`[<pre_point>, 0x2E, <post_point>]`), where `<pre_point>` is the utf-8 encoding of the most significant `n` digits of the decimal representation of `s`, and `<post_point>` is the utf-8 encoding of the remaining `k - n` digits of the decimal representation of `s`
-    - else if `-6 < n <= 0`, the encoding is the utf-8 string `0.<zeros><k_decimals>` (`[0x30, 0x2E, <zeros>, <k_decimals>]`), where `<zeros>` are `-n` many zero digits (`0x30`), and `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`
-    - else if `k == 1`, the encoding is `<base>e<sign><exp>` (`[<base>, 0x65, <sign>, <exp>]`), where `<base>` is the utf-8 encoding of the single digit of `s`, `<sign>` is the utf-8 string `+` (`0x2B`) if `n - 1` is positive or the utf-8 string `-` (`0x2D`) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
-    - else, the encoding is the utf-8 string `<pre_point>.<post_point>e<sign><exp>` (`[<pre_point>, 0x2E, <post_point>, 0x65, <sign>, <exp>]`), where `<pre_point>` is the utf-8 encoding of the most significant digit of the decimal representation of `s`, `<post_point>` is the utf-8 encoding of the remaining `k - 1` digits of the decimal representation of `s`, `<sign>` is the utf-8 string `+` (`0x2B`) if `n - 1` is positive or the utf-8 string `-` (`0x2D`) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
+###### Signing Encoding Booleans
+`true` is encoded as the utf-8 string `true` (`[0x74, 0x72, 0x75, 0x65]`).  
+`false` is encoded as the utf-8 string `false` (`[0x66, 0x61, 0x6c, 0x73, 0x65]`).
 
-###### Induction Hypotheses
+###### Signing Encoding Strings
+A string containing the unicode code points `c_0, ..., c_n` is is encoded as follows:
 
-Let `v_0, ..., v_n` be legacy values, and let `e_0(indent), ..., e_n(indent)` be the corresponding encodings using an indentation of `indent` many spaces. Initially, `indent` is `0`.
+- begin with the utf-8 string `"` (`0x22`)
+- for each code point `c_i` in `c_0, ..., c_n`:
+  - if `c_i` is unicode code point `0x000022` (quotation mark `"`), append the utf-8 string `\"` (`[0x5C, 0x22]`)
+  - else if `c_i` is unicode code point `0x00005C` (reverse solidus `\`), append the utf-8 string `\\` (`[0x5C, 0x5C]`)
+  - else if `c_i` is unicode code point `0x000008` (backspace), append the utf-8 string `\b` (`[0x5C, 0x62]`)
+  - else if `c_i` is unicode code point `0x00000C` (form feed), append the utf-8 string `\f` (`[0x5C, 0x66]`)
+  - else if `c_i` is unicode code point `0x00000A` (line feed), append the utf-8 string `\n` (`[0x5C, 0x6E]`)
+  - else if `c_i` is unicode code point `0x00000D` (carriage return), append the utf-8 string `\r` (`[0x5C, 0x72]`)
+  - else if `c_i` is unicode code point `0x000009` (line tabulation), append the utf-8 string `\t` (`[0x5C, 0x74]`)
+  - else if `c_i` is a unicode code point below `0x000020` (space), append the utf-8 string `\u<hex>` (`[0x5C, 0x75, <hex>]`), where `<hex>` are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters `a` - `f` (`0x61` - `0x66`) for alphabetic hex digits
+  - else append the utf-8 representation of `c_i` without any modifiations
+- append the utf-8 string `"` (`0x22`)
 
-###### Inductive Step
+###### Signing Encoding Floats
 
-- An array `[v_0, ..., v_n]` is encoded as follows:
-  - if the array is empty (`n == 0`), the encoding is the utf-8 string `[]` (`[0x5B, 0x5D]`)
-  - else, do the following:
-    - begin with the utf-8 string `[<line feed>` (`[0x5B, 0x0A]`)
-    - for each `v_i` in `v_0, ..., v_(n - 1)` (so skip this if `n == 1`):
-      - append `indent + 2` many space characters (`0x20`)
-      - append `e_i(indent + 2)`
-      - append the utf-8 string `,<line feed>` (`[0x2C, 0x0A]`)
+A float `m` is encoded as follows:
+
+- if `m == 0`, the encoding is the utf-8 string `0` (`0x30`)
+- else if `m` is negative, the encoding is the utf-8 string `-<abs(m)>`(`[0x2d, <abs(m)>]`), where `<abs(m)>` is the encoding of the same float with the sign bit flipped
+- else (largely quoting from the [ECMAScript specification, applying NOTE 2](https://www.ecma-international.org/ecma-262/6.0/#sec-tostring-applied-to-the-number-type) from here on):
+  - let `n`, `k` and `s` be integers such that:
+    - `k >= 1`
+    - `10 ^ (k - 1) <= s <= 10 ^ k`
+    - `s * (10 ^ (n - k))` is `m` (or [round-to-even-s](https://en.wikipedia.org/wiki/Rounding#Round_half_to_even) to `m` if it is not precisely representable in a 64 bit float)
+    - `k` is as small as possible
+    - if there are multiple values for `s`, choose the one for which `s * (10 ^ (n - k))` is closest in value to `m`
+    - if there are two such possible values of `s`, choose the one that is even
+    - Intuitively, `s` is the integer you get by removing the point ad all trailing zeros from the decimal representation of `m`, `k` is the number of digits in the decimal representation of `s`, and `n` specifies how to print the number: If `n` greater than `0`, there are `n` digits left of the point, else there are `abs(n)` many zeros right of the point. The choice of `s` uniquely determines `k` and `n`, the tricky part is finding a the `s` that rounds correctly and for which `k` is minimal.
+  - if `k <= n <= 21`, the encoding is the utf-8 string `<k_decimals><trailing_zeros>`, where `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`, and `<trailing_zeros` are `n - k` zero digits (`0x30`)
+  - else if `0 <= n <= 21`, the encoding is the utf-8 string `<pre_point>.<post_point>` (`[<pre_point>, 0x2E, <post_point>]`), where `<pre_point>` is the utf-8 encoding of the most significant `n` digits of the decimal representation of `s`, and `<post_point>` is the utf-8 encoding of the remaining `k - n` digits of the decimal representation of `s`
+  - else if `-6 < n <= 0`, the encoding is the utf-8 string `0.<zeros><k_decimals>` (`[0x30, 0x2E, <zeros>, <k_decimals>]`), where `<zeros>` are `-n` many zero digits (`0x30`), and `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`
+  - else if `k == 1`, the encoding is `<base>e<sign><exp>` (`[<base>, 0x65, <sign>, <exp>]`), where `<base>` is the utf-8 encoding of the single digit of `s`, `<sign>` is the utf-8 string `+` (`0x2B`) if `n - 1` is positive or the utf-8 string `-` (`0x2D`) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
+  - else, the encoding is the utf-8 string `<pre_point>.<post_point>e<sign><exp>` (`[<pre_point>, 0x2E, <post_point>, 0x65, <sign>, <exp>]`), where `<pre_point>` is the utf-8 encoding of the most significant digit of the decimal representation of `s`, `<post_point>` is the utf-8 encoding of the remaining `k - 1` digits of the decimal representation of `s`, `<sign>` is the utf-8 string `+` (`0x2B`) if `n - 1` is positive or the utf-8 string `-` (`0x2D`) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
+
+###### Signing Encoding Arrays
+
+Let `n` be a natural number less than `2^32`, let `v_0, ..., v_n` be [legacy values](#abstract-data-model), and let `e_0, ..., e_n` be functions that take a natural number as an argument and return the [encodings](#signing-encoding) of `v_0, ..., v_n` respectively using the supplied number as the indentation level.
+
+At indentation level `indent`, the array `[v_0, ..., v_n]` is encoded as follows:
+
+- if the array is empty (`n == 0`), the encoding is the utf-8 string `[]` (`[0x5B, 0x5D]`)
+- else, do the following:
+  - begin with the utf-8 string `[<line feed>` (`[0x5B, 0x0A]`)
+  - for each `v_i` in `v_0, ..., v_(n - 1)` (so skip this if `n == 1`):
     - append `indent + 2` many space characters (`0x20`)
-    - append `e_n(indent + 2)`
-    - append the utf-8 string `<line feed>` (`0x0A`)
-    - append `indent` many space characters (`0x20`)
-    - append the utf-8 string `]` (`0x5D`)
-- An object `{ s_0: v_0, ..., s_n: v_n}` is encoded as follows:
-  - if the object is empty (`n == 0`), the encoding is the utf-8 string `{}` (`[0x7B, 0x7D]`)
-  - else, do the following:
-    - begin with the utf-8 string `{<line feed>` (`[0x7B, 0x0A]`)
-    - for each pair `(s_i, v_i)` for `i` in `0, ..., n - 1` (so skip this if `n == 1`):
-      - append `indent + 2` many space characters (`0x20`)
-      - append the encoding of the string `s_i`
-      - append the utf-8 string `:<space>` (`[0x3A, 0x20]`)
-      - append `e_i(indent + 2)`
-      - append the utf-8 string `,<line feed>` (`[0x2C, 0x0A]`)
+    - append `e_i(indent + 2)`
+    - append the utf-8 string `,<line feed>` (`[0x2C, 0x0A]`)
+  - append `indent + 2` many space characters (`0x20`)
+  - append `e_n(indent + 2)`
+  - append the utf-8 string `<line feed>` (`0x0A`)
+  - append `indent` many space characters (`0x20`)
+  - append the utf-8 string `]` (`0x5D`)
+
+###### Signing Encoding Objects
+
+Let `n` be a natural number less than `2^32`, let `s_0, ..., s_n` be pairwise distinct [strings](#strings), let `v_0, ..., v_n` be [legacy values](#abstract-data-model), and let `e_0, ..., e_n` be functions that take a natural number as an argument and return the [encodings](#signing-encoding) of `v_0, ..., v_n` respectively using the supplied number as the indentation level.
+
+At indentation level `indent`, the object `{ s_0: v_0, ..., s_n: v_n}` is encoded as follows:
+
+- if the object is empty (`n == 0`), the encoding is the utf-8 string `{}` (`[0x7B, 0x7D]`)
+- else, do the following:
+  - begin with the utf-8 string `{<line feed>` (`[0x7B, 0x0A]`)
+  - for each pair `(s_i, v_i)` for `i` in `0, ..., n - 1` (so skip this if `n == 1`):
     - append `indent + 2` many space characters (`0x20`)
     - append the encoding of the string `s_i`
     - append the utf-8 string `:<space>` (`[0x3A, 0x20]`)
     - append `e_i(indent + 2)`
-    - append the utf-8 string `<line feed>` (`0x0A`)
-    - append `indent` many space characters (`0x20`)
-    - append the utf-8 string `}` (`0x7D`)
-  - The order in which to serialize the entries `s_i: v_i` is not fully specified, but there are some constraints:
-    - intuitively: Natural numbers are sorted ascendingly
-    - formally:
-      - if there is an entry with the key `"0"` (`0x30`), the entry must be the first to be serialized
-      - all entries whose keys begin with a nonzero decimal digit (1 - 9 (`0x31` - `0x39`)) followed by zero or more arbitrary decimal digits (0 - 9 (`0x30` - `0x39`)) and consists solely of such digits, must be serialized before all other entries (but after an entry with key `"0"` if one exists). Amongst themselves, these keys are sorted:
-        - by length first (ascending), using
-        - numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
-          - note that this coincides with sorting the decimally encoded numbers by numeric value
-    - all other entries may be serialized in an arbitrary order
+    - append the utf-8 string `,<line feed>` (`[0x2C, 0x0A]`)
+  - append `indent + 2` many space characters (`0x20`)
+  - append the encoding of the string `s_i`
+  - append the utf-8 string `:<space>` (`[0x3A, 0x20]`)
+  - append `e_i(indent + 2)`
+  - append the utf-8 string `<line feed>` (`0x0A`)
+  - append `indent` many space characters (`0x20`)
+  - append the utf-8 string `}` (`0x7D`)
+- The order in which to serialize the entries `s_i: v_i` is not fully specified, but there are some constraints:
+  - intuitively: Natural numbers are sorted ascendingly
+  - formally:
+    - if there is an entry with the key `"0"` (`0x30`), the entry must be the first to be serialized
+    - all entries whose keys begin with a nonzero decimal digit (1 - 9 (`0x31` - `0x39`)) followed by zero or more arbitrary decimal digits (0 - 9 (`0x30` - `0x39`)) and consists solely of such digits, must be serialized before all other entries (but after an entry with key `"0"` if one exists). Amongst themselves, these keys are sorted:
+      - by length first (ascending), using
+      - numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
+        - note that this coincides with sorting the decimally encoded numbers by numeric value
+  - all other entries may be serialized in an arbitrary order
 
 The string handling is equivalent to [ECMAScript 2015 QuoteJSONString](https://www.ecma-international.org/ecma-262/6.0/#sec-quotejsonstring), but defined over utf-8 strings instead of utf-16 ones.
 
