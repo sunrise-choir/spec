@@ -10,7 +10,7 @@ Encodings for persistent storage are not specified in this document, but is cruc
 
 The ssb protocol was initially implemented in javascript, and it relied heavily on implicit behavior of the [node js](https://nodejs.org/en/) runtime. It has since switched to a more carefully designed message format, but the old fomat still needs to be supported to keep backwards-compatibility.
 
-## Legacy Messages
+## Legacy Data
 
 This section describes the message format that was originally used by ssb. The protocol has since moved on, everything here should be considered deprecated. But for backwards compatibility, ssb servers still need to understand, verify and relay old messages.
 
