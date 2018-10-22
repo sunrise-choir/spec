@@ -191,6 +191,24 @@
 </li>
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
+<a class="header" href="#multibox" id="multibox"><h2>Multibox</h2></a>
+<p>A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The only currently supported algorithm is <a href="https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages">private-box</a>.</p>
+<a class="header" href="#multibox-legacy-encoding" id="multibox-legacy-encoding"><h3>Multibox Legacy Encoding</h3></a>
+<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multibox is defined as the concatenation of:</p>
+<ul>
+<li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the cyphertext
+<ul>
+<li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code></li>
+</ul>
+</li>
+<li>the characters <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
+<li>an algorithm-specific suffix
+<ul>
+<li>for secret-box, this is the empty string</li>
+</ul>
+</li>
+</ul>
+<p>Typically, this encoding is stored in a json string.</p>
 <a class="header" href="#datamodel" id="datamodel"><h1>Datamodel</h1></a>
 <p>Ssb accepts schemaless data, adhering to a certain format specified in this section. This is the data that application developers care about. Internally, ssb then adds some more metadata to maintain the append-only logs, discussed in the <a href="./messages">next chapter</a>. This chapter only describes the data model of the schemaless content data.</p>
 <p>It is important to clearly distinguish between the abstract data model of a format, and various encodings. For example, the strings <code>1</code>, <code>1.0</code> and <code>0.1e1</code> are all different <a href="http://json.org/">json</a> encodings of the same abstract value. And there can even be different encoding formats for the same abstract value, e.g. the bytes <code>0xf93c00</code> also encode the floating point number 1.0, but in <a href="https://tools.ietf.org/html/rfc7049">cbor</a> rather than json.</p>
@@ -406,13 +424,7 @@ TODO insert new format here -->
 <li><code>content</code>: a <a href="./datamodel.html#abstract-data-model">legacy data value</a> that is either:
 <ul>
 <li>an object containing an entry <code>&quot;type&quot;</code>, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16</li>
-<li>an encrypted message, encoded as a string which
-<ul>
-<li>begins with <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> <a href="https://tools.ietf.org/html/rfc4648#section-4"> base64(ietf rfc 4648, section 4)</a>, disallowing superflous <code>=</code> characters inside the data or after the necessary padding <code>=</code>s</li>
-<li>followed by the string <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
-<li>followed by zero or more bytes of valid unicode</li>
-</ul>
-</li>
+<li>a <a href="./datatypes.html#multibox">multibox</a></li>
 </ul>
 </li>
 <li><code>swapped</code>: a boolean indicating how to encode the metadata</li>
@@ -451,8 +463,10 @@ TODO insert new format here -->
 <li>the <code>swapped</code> boolean is omitted</li>
 <li>an entry <code>&quot;hash&quot;: &quot;sha256&quot;</code> is added</li>
 <li>if <code>swapped</code>, the order of entries must be <code>previous, sequence, author, timestamp, hash, content, signature</code>, else it must be <code>previous, author, sequence, timestamp, hash, content, signature</code></li>
+<li>if <code>content</code> is a multibox, it must use the <a href="./datatypes.html#multibox-legacy-encoding">legacy multibox encoding</a> as a string</li>
 </ul>
 <p>When creating new messages, the (purely logical) value of <code>swapped</code> should be <code>false</code>. Or you might set it to <code>true</code>, or generate it randomly - nobody can stop you, and everything will still work.</p>
+<a class="header" href="#legacy-message" id="legacy-message"><h3>Legacy Message</h3></a>
 <p>To this json encoding corresponds exactly one legacy data value with a fixed order of object entries. This value is referred to as a <em>legacy message</em>.</p>
 <a class="header" href="#computing-a-legacy-messages-signature" id="computing-a-legacy-messages-signature"><h3>Computing a Legacy Message's Signature</h3></a>
 <p>To obtain the signature of a message, first compute the json encoding specified above, but without the <code>&quot;signature&quot;</code> entry. Then compute the signing encoding of the corresponding legacy data value, using the entry order of the json as a tie-breaker for the entry-order of the signing encoding. Finally use the signing primitive of the message's <code>author</code> on the signing encoding, to obtain the signature.</p>

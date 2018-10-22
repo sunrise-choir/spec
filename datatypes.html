@@ -187,6 +187,24 @@
 </li>
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
+<a class="header" href="#multibox" id="multibox"><h2>Multibox</h2></a>
+<p>A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The only currently supported algorithm is <a href="https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages">private-box</a>.</p>
+<a class="header" href="#multibox-legacy-encoding" id="multibox-legacy-encoding"><h3>Multibox Legacy Encoding</h3></a>
+<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multibox is defined as the concatenation of:</p>
+<ul>
+<li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the cyphertext
+<ul>
+<li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code></li>
+</ul>
+</li>
+<li>the characters <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
+<li>an algorithm-specific suffix
+<ul>
+<li>for secret-box, this is the empty string</li>
+</ul>
+</li>
+</ul>
+<p>Typically, this encoding is stored in a json string.</p>
 
                     </main>
 
