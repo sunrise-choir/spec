@@ -42,3 +42,19 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
   - for sha256, this is `sha256` (`[0x73, 0x68, 0x61, 0x32, 0x35, 0x36]`)
 
 Typically, this encoding is stored in a json string.
+
+## Multibox
+
+A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The only currently supported algorithm is [private-box](https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages).
+
+### Multibox Legacy Encoding
+
+The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multibox is defined as the concatenation of:
+
+- the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the cyphertext
+  - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=`
+- the characters `.box` (`[0x2E, 0x62, 0x6F, 0x78]`)
+- an algorithm-specific suffix
+  - for secret-box, this is the empty string
+
+Typically, this encoding is stored in a json string.
