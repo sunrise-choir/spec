@@ -202,7 +202,7 @@
 </ul>
 </li>
 <li>the characters <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
-<li>an algorithm-specific suffix
+<li>an algorithm-specific suffix, which may not contain the quote character <code>&quot;</code> (<code>0x22</code>)
 <ul>
 <li>for secret-box, this is the empty string</li>
 </ul>
@@ -483,6 +483,7 @@ TODO insert new format here -->
 </ul>
 </li>
 <li>its length is smaller than <code>16385</code></li>
+<li>if <code>previous</code> is not <code>null</code>, than the sequence number of the message must be one larger than that of the message whose hash is the value of <code>previous</code></li>
 </ul>
 
                     </main>
