@@ -54,7 +54,7 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
 - the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the cyphertext
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=`
 - the characters `.box` (`[0x2E, 0x62, 0x6F, 0x78]`)
-- an algorithm-specific suffix
+- an algorithm-specific suffix, which may not contain the quote character `"` (`0x22`)
   - for secret-box, this is the empty string
 
 Typically, this encoding is stored in a json string.

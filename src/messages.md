@@ -93,3 +93,4 @@ A legacy message is considered valid if and only if all of the following conditi
 - its json encoding is a possible output of the [message creation algorithm](#legacy-json-encoding)
   - in particular, the claimed signature must match the data and public key
 - its length is smaller than `16385`
+- if `previous` is not `null`, than the sequence number of the message must be one larger than that of the message whose hash is the value of `previous`
