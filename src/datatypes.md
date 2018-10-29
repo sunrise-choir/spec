@@ -17,6 +17,7 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
 - the character `@` (`0x40`)
 - the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the key itself
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
+  - it may not omit `=` characters either - the amount of encoding bytes must always be a multiple of four
 - the character `.` (`0x2E`)
 - the primitive-specific suffix
   - for ed25519, this is `ed25519` (`[0x65, 0x64, 0x32, 0x35, 0x35, 0x31, 0x39]`)
@@ -37,6 +38,7 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
     - the encoding using `&` is called a (legacy) blob (multi)hash
 - the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the digest itself
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
+  - it may not omit `=` characters either - the amount of encoding bytes must always be a multiple of four
 - the character `.` (`0x2E`)
 - the primitive-specific suffix
   - for sha256, this is `sha256` (`[0x73, 0x68, 0x61, 0x32, 0x35, 0x36]`)
@@ -53,6 +55,7 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
 
 - the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the cyphertext
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=`
+  - it may not omit `=` characters either - the amount of encoding bytes must always be a multiple of four
 - the characters `.box` (`[0x2E, 0x62, 0x6F, 0x78]`)
 - an algorithm-specific suffix, which may not contain the quote character `"` (`0x22`)
   - for secret-box, this is the empty string
