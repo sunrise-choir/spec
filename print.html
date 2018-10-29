@@ -153,6 +153,7 @@
 <li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the key itself
 <ul>
 <li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code> characters inside the data or after the necessary padding <code>=</code>s</li>
+<li>it may not omit <code>=</code> characters either - the amount of encoding bytes must always be a multiple of four</li>
 </ul>
 </li>
 <li>the character <code>.</code> (<code>0x2E</code>)</li>
@@ -181,6 +182,7 @@
 <li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the digest itself
 <ul>
 <li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code> characters inside the data or after the necessary padding <code>=</code>s</li>
+<li>it may not omit <code>=</code> characters either - the amount of encoding bytes must always be a multiple of four</li>
 </ul>
 </li>
 <li>the character <code>.</code> (<code>0x2E</code>)</li>
@@ -199,6 +201,7 @@
 <li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the cyphertext
 <ul>
 <li><a href="https://tools.ietf.org/html/rfc4648#section-4">ietf rfc 4648, section 4</a>, disallowing superflous <code>=</code></li>
+<li>it may not omit <code>=</code> characters either - the amount of encoding bytes must always be a multiple of four</li>
 </ul>
 </li>
 <li>the characters <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
