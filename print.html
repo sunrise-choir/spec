@@ -260,7 +260,7 @@
 <li>else if <code>c_i</code> is unicode code point <code>0x00000D</code> (carriage return), append the utf-8 string <code>\r</code> (<code>[0x5C, 0x72]</code>)</li>
 <li>else if <code>c_i</code> is unicode code point <code>0x000009</code> (line tabulation), append the utf-8 string <code>\t</code> (<code>[0x5C, 0x74]</code>)</li>
 <li>else if <code>c_i</code> is a unicode code point below <code>0x000020</code> (space), append the utf-8 string <code>\u&lt;hex&gt;</code> (<code>[0x5C, 0x75, &lt;hex&gt;]</code>), where <code>&lt;hex&gt;</code> are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters <code>a</code> - <code>f</code> (<code>0x61</code> - <code>0x66</code>) for alphabetic hex digits</li>
-<li>else append the utf-8 representation of <code>c_i</code> without any modifiations</li>
+<li>else append the utf-8 representation of <code>c_i</code> without any modifications</li>
 </ul>
 </li>
 <li>append the utf-8 string <code>&quot;</code> (<code>0x22</code>)</li>
