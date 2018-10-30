@@ -181,3 +181,29 @@ In addition to the signing format, legacy messages can be encoded as [ECMA-404 j
 - escape sequences of surrogate code points must be matched: Each escape sequence for a high surrogate must be followed by an escape sequence for a low surrogate, and any escape sequence for a low surrogate must be preceded by an escape sequence for a high surrogate
 
 The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form has been used by the first ssb server implementations for message exchange with other servers.
+
+### CBOR Encoding
+
+A much more compact encoding for use in inter-server communication is based on [CBOR (ietf rfc 7049)](https://tools.ietf.org/html/rfc7049), with the following differences:
+
+- The only allowed major types are:
+  - `3` (text string)
+  - `4` (array)
+  - `5` (map)
+  - `7` (primitives)
+- no indefinite length strings, arrays or maps (additional type `31` is not allowed)
+- strings, arrays, maps must use the shortest possible encoding of their length
+- the key data items in a map must be text strings (have major type `3`)
+- primitives are restricted to the following additional types:
+  - `20` (`false`)
+  - `21` (`true`)
+  - `22` (`null`)
+  - `27` (64-bit floats)
+
+- `null` is encoded as cbor `null` (`0xF6`)
+- `true` is encoded as cbor `true` (`0xF5`)
+- `false` is encoded as cbor `false` (`0xF4`)
+- strings are encoded as cbor strings (major type 3)
+- floats are encoded as cbor 64 bit floats (`0xFB`) followed by the eight bytes of the IEEE 754 float (sign, exponent, fraction in that order)
+- arrays are encoded as cbor arrays (major type 4)
+- objects are encoded as cbor maps (major type 7), only using strings as keys
