@@ -70,7 +70,7 @@ A string containing the unicode code points `c_0, ..., c_n` is is encoded as fol
   - else if `c_i` is unicode code point `0x00000D` (carriage return), append the utf-8 string `\r` (`[0x5C, 0x72]`)
   - else if `c_i` is unicode code point `0x000009` (line tabulation), append the utf-8 string `\t` (`[0x5C, 0x74]`)
   - else if `c_i` is a unicode code point below `0x000020` (space), append the utf-8 string `\u<hex>` (`[0x5C, 0x75, <hex>]`), where `<hex>` are the two utf-8 bytes of the hexadecimal encoding of the code point, using lower-case letters `a` - `f` (`0x61` - `0x66`) for alphabetic hex digits
-  - else append the utf-8 representation of `c_i` without any modifiations
+  - else append the utf-8 representation of `c_i` without any modifications
 - append the utf-8 string `"` (`0x22`)
 
 ###### Signing Encoding Floats
