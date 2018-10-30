@@ -313,6 +313,58 @@
 <li>escape sequences of surrogate code points must be matched: Each escape sequence for a high surrogate must be followed by an escape sequence for a low surrogate, and any escape sequence for a low surrogate must be preceded by an escape sequence for a high surrogate</li>
 </ul>
 <p>The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form has been used by the first ssb server implementations for message exchange with other servers.</p>
+<a class="header" href="#cbor-encoding" id="cbor-encoding"><h3>CBOR Encoding</h3></a>
+<p>A much more compact encoding for use in inter-server communication is based on <a href="https://tools.ietf.org/html/rfc7049">CBOR (ietf rfc 7049)</a>, with the following differences:</p>
+<ul>
+<li>
+<p>The only allowed major types are:</p>
+<ul>
+<li><code>3</code> (text string)</li>
+<li><code>4</code> (array)</li>
+<li><code>5</code> (map)</li>
+<li><code>7</code> (primitives)</li>
+</ul>
+</li>
+<li>
+<p>no indefinite length strings, arrays or maps (additional type <code>31</code> is not allowed)</p>
+</li>
+<li>
+<p>strings, arrays, maps must use the shortest possible encoding of their length</p>
+</li>
+<li>
+<p>the key data items in a map must be text strings (have major type <code>3</code>)</p>
+</li>
+<li>
+<p>primitives are restricted to the following additional types:</p>
+<ul>
+<li><code>20</code> (<code>false</code>)</li>
+<li><code>21</code> (<code>true</code>)</li>
+<li><code>22</code> (<code>null</code>)</li>
+<li><code>27</code> (64-bit floats)</li>
+</ul>
+</li>
+<li>
+<p><code>null</code> is encoded as cbor <code>null</code> (<code>0xF6</code>)</p>
+</li>
+<li>
+<p><code>true</code> is encoded as cbor <code>true</code> (<code>0xF5</code>)</p>
+</li>
+<li>
+<p><code>false</code> is encoded as cbor <code>false</code> (<code>0xF4</code>)</p>
+</li>
+<li>
+<p>strings are encoded as cbor strings (major type 3)</p>
+</li>
+<li>
+<p>floats are encoded as cbor 64 bit floats (<code>0xFB</code>) followed by the eight bytes of the IEEE 754 float (sign, exponent, fraction in that order)</p>
+</li>
+<li>
+<p>arrays are encoded as cbor arrays (major type 4)</p>
+</li>
+<li>
+<p>objects are encoded as cbor maps (major type 7), only using strings as keys</p>
+</li>
+</ul>
 
                     </main>
 
