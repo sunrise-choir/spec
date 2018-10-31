@@ -140,6 +140,30 @@
 <p>A few datatypes appear throughout this spec, it makes sense to introduce them in one single place.</p>
 <p>An overarching theme of various parts of the ssb protocol(s) is that of future-proofness. The protocol will need to adapt itself to new circumstances, such as new transport channels or broken cryptographic primitives. A simple way to keep flexibility are self-describing multiformats, where the data is prefixed by an identifier (and in some cases its expected length). New data types can be introduced by simply assigning a new identifier. Older software can detect data types it doesn't understand yet, and react accordingly.</p>
 <p>Each format consists of some logical data type, and then one or more encodings. These encodings can serve different purposes, for example they might be optimized for machine-readability, human-readability, uniqueness, backwards-compatibility, etc.</p>
+<a class="header" href="#varu64" id="varu64"><h2>VarU64</h2></a>
+<p>A VarU64 is an unsigned 64 bit integer (a natural number between 0 and 2^64 - 1 inclusive), to be stored in a variable-length encoding.</p>
+<a class="header" href="#varu64-binary-encoding" id="varu64-binary-encoding"><h3>VarU64 Binary Encoding</h3></a>
+<p>The binary encoding of a VarU64 is easiest defined by giving the decoding process:</p>
+<p>To decode a VarU64, look at the first byte. If its value is below 248, the value itself is the encoded number. Else, the first byte determines the further <code>length</code> of the encoding:</p>
+<table><thead><tr><th> first byte </th><th> number of additional bytes </th></tr></thead><tbody>
+<tr><td> 248 </td><td> 1 </td></tr>
+<tr><td> 249 </td><td> 2 </td></tr>
+<tr><td> 250 </td><td> 3 </td></tr>
+<tr><td> 251 </td><td> 4 </td></tr>
+<tr><td> 252 </td><td> 5 </td></tr>
+<tr><td> 253 </td><td> 6 </td></tr>
+<tr><td> 254 </td><td> 7 </td></tr>
+<tr><td> 255 </td><td> 8 </td></tr>
+</tbody></table>
+<p>Following the first byte are <code>length</code> many bytes. These bytes are the big-endian representation of the encoded number.</p>
+<p>Of all possible representations for a number that this scheme admits, the shortest one is its unique, valid encoding. Decoders must indicate an error if a value uses an encoding that is longer than necessary.</p>
+<p>Further information on the VarU64 format can be found <a href="https://github.com/AljoschaMeyer/varu64-rs">here</a>.</p>
+<a class="header" href="#ctlv" id="ctlv"><h2>CTLV</h2></a>
+<p>A <em>compact type-length-value</em> encoding. A ctlv consists of a <code>type</code> (unsigned 64 bit integer), a <code>length</code> (unsigned 64 bit integer), and a <code>value</code> (a sequence of <code>length</code> many bytes).</p>
+<a class="header" href="#ctlv-binary-encoding" id="ctlv-binary-encoding"><h3>CTLV Binary Encoding</h3></a>
+<p>The binary encodings is the concatenation of an encoding of the type, an encoding of the length (sometimes omitted) and the raw bytes of the value.</p>
+<p>The <code>type</code> is an unsigned 64 bit integer, encoded as a <a href="https://github.com/AljoschaMeyer/varu64-rs">VarU64</a>. If <code>type</code> is <code>128</code> or more, it is followed by another VarU64 encoding the <code>length</code>. If <code>type</code> is less than <code>128</code>, the value of <code>length</code> is computed as <code>2 ^ (type &gt;&gt; 3)</code>. In both cases, the remainder of the encoding consists of <code>length</code> many bytes of payload (the <code>value</code>).</p>
+<p>Further information on the ctlv format can be found <a href="https://github.com/AljoschaMeyer/ctlv">here</a>.</p>
 <a class="header" href="#multikey" id="multikey"><h2>Multikey</h2></a>
 <p>A multikey is the public key of some <a href="https://en.wikipedia.org/wiki/Digital_signature">digital signature</a> scheme, annotated with an identifier for the scheme itself. The only currently supported cryptographic primitive is <a href="http://ed25519.cr.yp.to/">ed25519</a> (which has a public key length of 32 bytes).</p>
 <a class="header" href="#multikey-legacy-encoding" id="multikey-legacy-encoding"><h3>Multikey Legacy Encoding</h3></a>
@@ -160,6 +184,11 @@
 </li>
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
+<a class="header" href="#multikey-compact-encoding" id="multikey-compact-encoding"><h3>Multikey Compact Encoding</h3></a>
+<p>The compact encoding of a multikey is a <a href="#ctlv-binary-encoding">binary ctlv encoding</a>, where the <code>value</code> is the raw byte array of the key, and the type is taken from the following table:</p>
+<table><thead><tr><th> Cryptographic Primitive </th><th> Type </th></tr></thead><tbody>
+<tr><td> ed25519                 </td><td> 40   </td></tr>
+</tbody></table>
 <a class="header" href="#multihash" id="multihash"><h2>Multihash</h2></a>
 <p>A multihash is the hash digest of some <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">cryptographically secure hash function</a>, annotated with an identifier for the hash function itself. The only currently supported cryptographic primitive is <a href="https://en.wikipedia.org/wiki/SHA-2">sha256</a> (which has a digest length of 32 bytes).</p>
 <a class="header" href="#multihash-legacy-encoding" id="multihash-legacy-encoding"><h3>Multihash Legacy Encoding</h3></a>
@@ -189,6 +218,12 @@
 </li>
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
+<a class="header" href="#multihash-compact-encoding" id="multihash-compact-encoding"><h3>Multihash Compact Encoding</h3></a>
+<p>The compact encoding of a multihash is a <a href="#ctlv-binary-encoding">binary ctlv encoding</a>, where the <code>value</code> is the raw byte array of the hash, and the type is taken from the following table:</p>
+<table><thead><tr><th> Cryptographic Primitive </th><th> Blob? </th><th> Type </th></tr></thead><tbody>
+<tr><td> sha256                  </td><td> no    </td><td> 40   </td></tr>
+<tr><td> sha256                  </td><td> yes   </td><td> 41   </td></tr>
+</tbody></table>
 <a class="header" href="#multibox" id="multibox"><h2>Multibox</h2></a>
 <p>A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The only currently supported algorithm is <a href="https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages">private-box</a>.</p>
 <a class="header" href="#multibox-legacy-encoding" id="multibox-legacy-encoding"><h3>Multibox Legacy Encoding</h3></a>
@@ -208,6 +243,9 @@
 </li>
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
+<p><strong>This definition might still change</strong>: %EwwjtvHK7i1MFXnazWTjivGEhdAymQd0xR+BU82XpdM=.sha256</p>
+<a class="header" href="#multibox-compact-encoding" id="multibox-compact-encoding"><h3>Multibox Compact Encoding</h3></a>
+<p>Depends on %EwwjtvHK7i1MFXnazWTjivGEhdAymQd0xR+BU82XpdM=.sha256</p>
 
                     </main>
 
