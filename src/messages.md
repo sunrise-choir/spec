@@ -94,3 +94,34 @@ A legacy message is considered valid if and only if all of the following conditi
   - in particular, the claimed signature must match the data and public key
 - its length is smaller than `16385`
 - if `previous` is `null`, the sequence number off the message must be the float `1`, else it must be one larger than that of the message whose hash is the value of `previous`
+
+### Compact Legacy Message Representation
+
+While the json encoding of legacy messages is necessary for signing, it is very inefficient. The *compact legacy message representation* (*clmr*) provides an alernative that takes up less space and is simpler to parse.
+
+The clmr encoding of a legacy message is the concatenation of the following:
+
+- a byte determined as follows:
+  - the five most significants bits are set to `0`
+  - the sixth-most significant bit is set to `0` if `previous` is `null`, `1` otherwise
+  - the seventh-most significant bit is set to `0` if `swapped` is `false`, `1` otherwise
+  - the least significant bit is set to `0` if `content` is an object, `1` otherwise (i.e. when the content is encrypted)
+- the [compact encoding](./datatypes.md#multikey-compact-encoding) of the `author` multikey
+- the [VarU64 binary encoding](./datatypes.md#varu64-binary-encoding) of the `sequence` integer
+- the binary representation of the `timestamp` 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zero, infinities and NaNs are invalid)
+- if `previous` is not `null`, the [compact encoding](./datatypes.md#multihash-compact-encoding) of the `previous` multihash
+- depending on whether the message content is encrypted or not:
+  - if the message content is not encrypted: the [legacy cbor encoding](./datamodel.md#cbor-encoding) of the content
+  - if the message content is encrypted: the [compact encoding](./datatypes.md#multibox-compact-encoding) of the `content` multibox
+- a [VarU64](./datatypes.md#varu64-binary-encoding) indicating the length of the signature in bytes
+- the raw bytes of the `signature`
+
+---
+
+- `<signature>` is a varint `foo` followed by `foo > 1` bytes. The least significant byte of the varint specifies the order of `author` and `sequence` when computing the json signing format.
+- `<author>` is a [yamf-pubkey](%cLnq+v5N6771kniz97k/j52qh1F6mUssWCGrYPwKLkA=.sha256)
+- `<seqnum>` is a [canonical](https://github.com/multiformats/unsigned-varint/issues/5) [varint](https://github.com/multiformats/unsigned-varint)
+- `<timestamp>` is an IEEE_754 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zeros, infinities and NaNs are invalid)
+- `<previous>` is a [yamf-hash](%tLojVSXLYahw/XFXim76QL6dxnOtuYag0Ff/zBrt32Q=.sha256)
+- `<data_length>` is a varint containing
+- `<data>` is whatever data format we come up with (my current proposal is [this](https://github.com/sunrise-choir/spec/blob/master/spec.md#cbor-encoding-of-legacy-data))
