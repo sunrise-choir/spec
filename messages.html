@@ -235,6 +235,41 @@ TODO insert new format here -->
 <li>its length is smaller than <code>16385</code></li>
 <li>if <code>previous</code> is <code>null</code>, the sequence number off the message must be the float <code>1</code>, else it must be one larger than that of the message whose hash is the value of <code>previous</code></li>
 </ul>
+<a class="header" href="#compact-legacy-message-representation" id="compact-legacy-message-representation"><h3>Compact Legacy Message Representation</h3></a>
+<p>While the json encoding of legacy messages is necessary for signing, it is very inefficient. The <em>compact legacy message representation</em> (<em>clmr</em>) provides an alernative that takes up less space and is simpler to parse.</p>
+<p>The clmr encoding of a legacy message is the concatenation of the following:</p>
+<ul>
+<li>a byte determined as follows:
+<ul>
+<li>the five most significants bits are set to <code>0</code></li>
+<li>the sixth-most significant bit is set to <code>0</code> if <code>previous</code> is <code>null</code>, <code>1</code> otherwise</li>
+<li>the seventh-most significant bit is set to <code>0</code> if <code>swapped</code> is <code>false</code>, <code>1</code> otherwise</li>
+<li>the least significant bit is set to <code>0</code> if <code>content</code> is an object, <code>1</code> otherwise (i.e. when the content is encrypted)</li>
+</ul>
+</li>
+<li>the <a href="./datatypes.html#multikey-compact-encoding">compact encoding</a> of the <code>author</code> multikey</li>
+<li>the <a href="./datatypes.html#varu64-binary-encoding">VarU64 binary encoding</a> of the <code>sequence</code> integer</li>
+<li>the binary representation of the <code>timestamp</code> 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zero, infinities and NaNs are invalid)</li>
+<li>if <code>previous</code> is not <code>null</code>, the <a href="./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash</li>
+<li>depending on whether the message content is encrypted or not:
+<ul>
+<li>if the message content is not encrypted: the <a href="./datamodel.html#cbor-encoding">legacy cbor encoding</a> of the content</li>
+<li>if the message content is encrypted: the <a href="./datatypes.html#multibox-compact-encoding">compact encoding</a> of the <code>content</code> multibox</li>
+</ul>
+</li>
+<li>a <a href="./datatypes.html#varu64-binary-encoding">VarU64</a> indicating the length of the signature in bytes</li>
+<li>the raw bytes of the <code>signature</code></li>
+</ul>
+<hr />
+<ul>
+<li><code>&lt;signature&gt;</code> is a varint <code>foo</code> followed by <code>foo &gt; 1</code> bytes. The least significant byte of the varint specifies the order of <code>author</code> and <code>sequence</code> when computing the json signing format.</li>
+<li><code>&lt;author&gt;</code> is a <a href="%cLnq+v5N6771kniz97k/j52qh1F6mUssWCGrYPwKLkA=.sha256">yamf-pubkey</a></li>
+<li><code>&lt;seqnum&gt;</code> is a <a href="https://github.com/multiformats/unsigned-varint/issues/5">canonical</a> <a href="https://github.com/multiformats/unsigned-varint">varint</a></li>
+<li><code>&lt;timestamp&gt;</code> is an IEEE_754 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zeros, infinities and NaNs are invalid)</li>
+<li><code>&lt;previous&gt;</code> is a <a href="%tLojVSXLYahw/XFXim76QL6dxnOtuYag0Ff/zBrt32Q=.sha256">yamf-hash</a></li>
+<li><code>&lt;data_length&gt;</code> is a varint containing</li>
+<li><code>&lt;data&gt;</code> is whatever data format we come up with (my current proposal is <a href="https://github.com/sunrise-choir/spec/blob/master/spec.md#cbor-encoding-of-legacy-data">this</a>)</li>
+</ul>
 
                     </main>
 
