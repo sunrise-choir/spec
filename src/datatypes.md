@@ -6,6 +6,45 @@ An overarching theme of various parts of the ssb protocol(s) is that of future-p
 
 Each format consists of some logical data type, and then one or more encodings. These encodings can serve different purposes, for example they might be optimized for machine-readability, human-readability, uniqueness, backwards-compatibility, etc.
 
+## VarU64
+
+A VarU64 is an unsigned 64 bit integer (a natural number between 0 and 2^64 - 1 inclusive), to be stored in a variable-length encoding.
+
+### VarU64 Binary Encoding
+
+The binary encoding of a VarU64 is easiest defined by giving the decoding process:
+
+To decode a VarU64, look at the first byte. If its value is below 248, the value itself is the encoded number. Else, the first byte determines the further `length` of the encoding:
+
+| first byte | number of additional bytes |
+|------------|----------------------------|
+| 248 | 1 |
+| 249 | 2 |
+| 250 | 3 |
+| 251 | 4 |
+| 252 | 5 |
+| 253 | 6 |
+| 254 | 7 |
+| 255 | 8 |
+
+Following the first byte are `length` many bytes. These bytes are the big-endian representation of the encoded number.
+
+Of all possible representations for a number that this scheme admits, the shortest one is its unique, valid encoding. Decoders must indicate an error if a value uses an encoding that is longer than necessary.
+
+Further information on the VarU64 format can be found [here](https://github.com/AljoschaMeyer/varu64-rs).
+
+## CTLV
+
+A *compact type-length-value* encoding. A ctlv consists of a `type` (unsigned 64 bit integer), a `length` (unsigned 64 bit integer), and a `value` (a sequence of `length` many bytes).
+
+### CTLV Binary Encoding
+
+The binary encodings is the concatenation of an encoding of the type, an encoding of the length (sometimes omitted) and the raw bytes of the value.
+
+The `type` is an unsigned 64 bit integer, encoded as a [VarU64](https://github.com/AljoschaMeyer/varu64-rs). If `type` is `128` or more, it is followed by another VarU64 encoding the `length`. If `type` is less than `128`, the value of `length` is computed as `2 ^ (type >> 3)`. In both cases, the remainder of the encoding consists of `length` many bytes of payload (the `value`).
+
+Further information on the ctlv format can be found [here](https://github.com/AljoschaMeyer/ctlv).
+
 ## Multikey
 
 A multikey is the public key of some [digital signature](https://en.wikipedia.org/wiki/Digital_signature) scheme, annotated with an identifier for the scheme itself. The only currently supported cryptographic primitive is [ed25519](http://ed25519.cr.yp.to/) (which has a public key length of 32 bytes).
@@ -23,6 +62,14 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
   - for ed25519, this is `ed25519` (`[0x65, 0x64, 0x32, 0x35, 0x35, 0x31, 0x39]`)
 
 Typically, this encoding is stored in a json string.
+
+### Multikey Compact Encoding
+
+The compact encoding of a multikey is a [binary ctlv encoding](#ctlv-binary-encoding), where the `value` is the raw byte array of the key, and the type is taken from the following table:
+
+| Cryptographic Primitive | Type |
+|-------------------------|------|
+| ed25519                 | 40   |
 
 ## Multihash
 
@@ -45,6 +92,15 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
 
 Typically, this encoding is stored in a json string.
 
+### Multihash Compact Encoding
+
+The compact encoding of a multihash is a [binary ctlv encoding](#ctlv-binary-encoding), where the `value` is the raw byte array of the hash, and the type is taken from the following table:
+
+| Cryptographic Primitive | Blob? | Type |
+|-------------------------|-------|------|
+| sha256                  | no    | 40   |
+| sha256                  | yes   | 41   |
+
 ## Multibox
 
 A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The only currently supported algorithm is [private-box](https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages).
@@ -61,3 +117,9 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
   - for secret-box, this is the empty string
 
 Typically, this encoding is stored in a json string.
+
+**This definition might still change**: %EwwjtvHK7i1MFXnazWTjivGEhdAymQd0xR+BU82XpdM=.sha256
+
+### Multibox Compact Encoding
+
+Depends on %EwwjtvHK7i1MFXnazWTjivGEhdAymQd0xR+BU82XpdM=.sha256
