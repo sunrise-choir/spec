@@ -93,6 +93,7 @@ A float `m` is encoded as follows:
   - else if `-6 < n <= 0`, the encoding is the utf-8 string `0.<zeros><k_decimals>` (`[0x30, 0x2E, <zeros>, <k_decimals>]`), where `<zeros>` are `-n` many zero digits (`0x30`), and `<k_decimals>` is the utf-8 encoding of the digits of the decimal representation of `s`
   - else if `k == 1`, the encoding is `<base>e<sign><exp>` (`[<base>, 0x65, <sign>, <exp>]`), where `<base>` is the utf-8 encoding of the single digit of `s`, `<sign>` is the utf-8 string `+` (`0x2B`) if `n - 1` is positive or the utf-8 string `-` (`0x2D`) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
   - else, the encoding is the utf-8 string `<pre_point>.<post_point>e<sign><exp>` (`[<pre_point>, 0x2E, <post_point>, 0x65, <sign>, <exp>]`), where `<pre_point>` is the utf-8 encoding of the most significant digit of the decimal representation of `s`, `<post_point>` is the utf-8 encoding of the remaining `k - 1` digits of the decimal representation of `s`, `<sign>` is the utf-8 string `+` (`0x2B`) if `n - 1` is positive or the utf-8 string `-` (`0x2D`) if `n - 1` is negative, and `<exp>` is the utf-8 encoding of the decimal representation of the absolute value of `n - 1`
+- good to know: The maximum length for such an encoding is 25 bytes
 
 ###### Signing Encoding Arrays
 
