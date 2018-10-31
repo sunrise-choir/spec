@@ -214,6 +214,7 @@
 <li>else, the encoding is the utf-8 string <code>&lt;pre_point&gt;.&lt;post_point&gt;e&lt;sign&gt;&lt;exp&gt;</code> (<code>[&lt;pre_point&gt;, 0x2E, &lt;post_point&gt;, 0x65, &lt;sign&gt;, &lt;exp&gt;]</code>), where <code>&lt;pre_point&gt;</code> is the utf-8 encoding of the most significant digit of the decimal representation of <code>s</code>, <code>&lt;post_point&gt;</code> is the utf-8 encoding of the remaining <code>k - 1</code> digits of the decimal representation of <code>s</code>, <code>&lt;sign&gt;</code> is the utf-8 string <code>+</code> (<code>0x2B</code>) if <code>n - 1</code> is positive or the utf-8 string <code>-</code> (<code>0x2D</code>) if <code>n - 1</code> is negative, and <code>&lt;exp&gt;</code> is the utf-8 encoding of the decimal representation of the absolute value of <code>n - 1</code></li>
 </ul>
 </li>
+<li>good to know: The maximum length for such an encoding is 25 bytes</li>
 </ul>
 <a class="header" href="#signing-encoding-arrays" id="signing-encoding-arrays"><h6>Signing Encoding Arrays</h6></a>
 <p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>, and let <code>e_0, ..., e_n</code> be functions that take a natural number as an argument and return the <a href="#signing-encoding">encodings</a> of <code>v_0, ..., v_n</code> respectively using the supplied number as the indentation level.</p>
