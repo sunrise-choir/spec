@@ -250,7 +250,7 @@ TODO insert new format here -->
 <li>the <a href="./datatypes.html#multikey-compact-encoding">compact encoding</a> of the <code>author</code> multikey</li>
 <li>the <a href="./datatypes.html#varu64-binary-encoding">VarU64 binary encoding</a> of the <code>sequence</code> integer</li>
 <li>the binary representation of the <code>timestamp</code> 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zero, infinities and NaNs are invalid)</li>
-<li>if <code>previous</code> is not <code>null</code>, the <a href="./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash</li>
+<li>if <code>previous</code> is not <code>null</code>, the <a href="./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash, but without the leading VarU64 indicating the hash target</li>
 <li>depending on whether the message content is encrypted or not:
 <ul>
 <li>if the message content is not encrypted: the <a href="./datamodel.html#cbor-encoding">legacy cbor encoding</a> of the content</li>

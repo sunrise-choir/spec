@@ -166,7 +166,7 @@
 <p>A <em>compact type-length-value</em> encoding. A ctlv consists of a <code>type</code> (unsigned 64 bit integer), a <code>length</code> (unsigned 64 bit integer), and a <code>value</code> (a sequence of <code>length</code> many bytes).</p>
 <a class="header" href="#ctlv-binary-encoding" id="ctlv-binary-encoding"><h3>CTLV Binary Encoding</h3></a>
 <p>The binary encodings is the concatenation of an encoding of the type, an encoding of the length (sometimes omitted) and the raw bytes of the value.</p>
-<p>The <code>type</code> is an unsigned 64 bit integer, encoded as a <a href="https://github.com/AljoschaMeyer/varu64-rs">VarU64</a>. If <code>type</code> is <code>128</code> or more, it is followed by another VarU64 encoding the <code>length</code>. If <code>type</code> is less than <code>128</code>, the value of <code>length</code> is computed as <code>2 ^ (type &gt;&gt; 3)</code>. In both cases, the remainder of the encoding consists of <code>length</code> many bytes of payload (the <code>value</code>).</p>
+<p>The <code>type</code> is an unsigned 64 bit integer, encoded as a <a href="#varu64-binary-encoding">VarU64</a>. If <code>type</code> is <code>128</code> or more, it is followed by another VarU64 encoding the <code>length</code>. If <code>type</code> is less than <code>128</code>, the value of <code>length</code> is computed as <code>2 ^ (type &gt;&gt; 3)</code>. In both cases, the remainder of the encoding consists of <code>length</code> many bytes of payload (the <code>value</code>).</p>
 <p>Further information on the ctlv format can be found <a href="https://github.com/AljoschaMeyer/ctlv">here</a>.</p>
 <a class="header" href="#multikey" id="multikey"><h2>Multikey</h2></a>
 <p>A multikey is the public key of some <a href="https://en.wikipedia.org/wiki/Digital_signature">digital signature</a> scheme, annotated with an identifier for the scheme itself. The only currently supported cryptographic primitive is <a href="http://ed25519.cr.yp.to/">ed25519</a> (which has a public key length of 32 bytes).</p>
@@ -194,18 +194,20 @@
 <tr><td> ed25519                 </td><td> 40   </td></tr>
 </tbody></table>
 <a class="header" href="#multihash" id="multihash"><h2>Multihash</h2></a>
-<p>A multihash is the hash digest of some <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">cryptographically secure hash function</a>, annotated with an identifier for the hash function itself. The only currently supported cryptographic primitive is <a href="https://en.wikipedia.org/wiki/SHA-2">sha256</a> (which has a digest length of 32 bytes).</p>
+<p>A multihash is a pair of:</p>
+<ul>
+<li>the hash target</li>
+<li>the hash digest of some <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">cryptographically secure hash function</a>, annotated with an identifier for the hash function itself.</li>
+</ul>
+<p>The only currently supported hash targets are <code>Message</code> and <code>Blob</code></p>
+<p>The only currently supported cryptographic primitive is <a href="https://en.wikipedia.org/wiki/SHA-2">sha256</a> (which has a digest length of 32 bytes).</p>
 <a class="header" href="#multihash-legacy-encoding" id="multihash-legacy-encoding"><h3>Multihash Legacy Encoding</h3></a>
 <p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multihash is defined as the concatenation of:</p>
 <ul>
-<li>either the character <code>%</code> (<code>0x25</code>) or the character <code>&amp;</code> (<code>0x26</code>)
+<li>depending on the hash target:
 <ul>
-<li>this is sometimes used to distinguish between messages and blobs:
-<ul>
-<li>the encoding using <code>%</code> is called a (legacy) message (multi)hash</li>
-<li>the encoding using <code>&amp;</code> is called a (legacy) blob (multi)hash</li>
-</ul>
-</li>
+<li><code>Message</code>: the character <code>%</code> (<code>0x25</code>)</li>
+<li><code>Blob</code>: the character <code>&amp;</code> (<code>0x26</code>)</li>
 </ul>
 </li>
 <li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the digest itself
@@ -223,10 +225,14 @@
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
 <a class="header" href="#multihash-compact-encoding" id="multihash-compact-encoding"><h3>Multihash Compact Encoding</h3></a>
-<p>The compact encoding of a multihash is a <a href="#ctlv-binary-encoding">binary ctlv encoding</a>, where the <code>value</code> is the raw byte array of the hash, and the type is taken from the following table:</p>
-<table><thead><tr><th> Cryptographic Primitive </th><th> Blob? </th><th> Type </th></tr></thead><tbody>
-<tr><td> sha256                  </td><td> no    </td><td> 40   </td></tr>
-<tr><td> sha256                  </td><td> yes   </td><td> 41   </td></tr>
+<p>The compact encoding of a multihash is a <a href="#varu64-binary-encoding">VarU64</a> indicating the hash target, followed by a <a href="#ctlv-binary-encoding">binary ctlv encoding</a> for the digest, where the <code>value</code> is the raw byte array of the hash, and the type is taken from the following table:</p>
+<table><thead><tr><th> Cryptographic Primitive </th><th> Type </th></tr></thead><tbody>
+<tr><td> sha256                  </td><td> 40   </td></tr>
+</tbody></table>
+<p>The VarU64 for the hash target is taken from the following table:</p>
+<table><thead><tr><th> Hash Target </th><th> Int </th></tr></thead><tbody>
+<tr><td> Message     </td><td> 0   </td></tr>
+<tr><td> Blob        </td><td> 1   </td></tr>
 </tbody></table>
 <a class="header" href="#multibox" id="multibox"><h2>Multibox</h2></a>
 <p>A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The only currently supported algorithm is <a href="https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages">private-box</a>.</p>
@@ -594,7 +600,7 @@ TODO insert new format here -->
 <li>the <a href="./datatypes.html#multikey-compact-encoding">compact encoding</a> of the <code>author</code> multikey</li>
 <li>the <a href="./datatypes.html#varu64-binary-encoding">VarU64 binary encoding</a> of the <code>sequence</code> integer</li>
 <li>the binary representation of the <code>timestamp</code> 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zero, infinities and NaNs are invalid)</li>
-<li>if <code>previous</code> is not <code>null</code>, the <a href="./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash</li>
+<li>if <code>previous</code> is not <code>null</code>, the <a href="./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash, but without the leading VarU64 indicating the hash target</li>
 <li>depending on whether the message content is encrypted or not:
 <ul>
 <li>if the message content is not encrypted: the <a href="./datamodel.html#cbor-encoding">legacy cbor encoding</a> of the content</li>
