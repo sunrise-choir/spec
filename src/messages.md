@@ -109,7 +109,7 @@ The clmr encoding of a legacy message is the concatenation of the following:
 - the [compact encoding](./datatypes.md#multikey-compact-encoding) of the `author` multikey
 - the [VarU64 binary encoding](./datatypes.md#varu64-binary-encoding) of the `sequence` integer
 - the binary representation of the `timestamp` 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zero, infinities and NaNs are invalid)
-- if `previous` is not `null`, the [compact encoding](./datatypes.md#multihash-compact-encoding) of the `previous` multihash
+- if `previous` is not `null`, the [compact encoding](./datatypes.md#multihash-compact-encoding) of the `previous` multihash, but without the leading VarU64 indicating the hash target
 - depending on whether the message content is encrypted or not:
   - if the message content is not encrypted: the [legacy cbor encoding](./datamodel.md#cbor-encoding) of the content
   - if the message content is encrypted: the [compact encoding](./datatypes.md#multibox-compact-encoding) of the `content` multibox

@@ -41,7 +41,7 @@ A *compact type-length-value* encoding. A ctlv consists of a `type` (unsigned 64
 
 The binary encodings is the concatenation of an encoding of the type, an encoding of the length (sometimes omitted) and the raw bytes of the value.
 
-The `type` is an unsigned 64 bit integer, encoded as a [VarU64](https://github.com/AljoschaMeyer/varu64-rs). If `type` is `128` or more, it is followed by another VarU64 encoding the `length`. If `type` is less than `128`, the value of `length` is computed as `2 ^ (type >> 3)`. In both cases, the remainder of the encoding consists of `length` many bytes of payload (the `value`).
+The `type` is an unsigned 64 bit integer, encoded as a [VarU64](#varu64-binary-encoding). If `type` is `128` or more, it is followed by another VarU64 encoding the `length`. If `type` is less than `128`, the value of `length` is computed as `2 ^ (type >> 3)`. In both cases, the remainder of the encoding consists of `length` many bytes of payload (the `value`).
 
 Further information on the ctlv format can be found [here](https://github.com/AljoschaMeyer/ctlv).
 
@@ -73,16 +73,22 @@ The compact encoding of a multikey is a [binary ctlv encoding](#ctlv-binary-enco
 
 ## Multihash
 
-A multihash is the hash digest of some [cryptographically secure hash function](https://en.wikipedia.org/wiki/Cryptographic_hash_function), annotated with an identifier for the hash function itself. The only currently supported cryptographic primitive is [sha256](https://en.wikipedia.org/wiki/SHA-2) (which has a digest length of 32 bytes).
+A multihash is a pair of:
+
+- the hash target
+- the hash digest of some [cryptographically secure hash function](https://en.wikipedia.org/wiki/Cryptographic_hash_function), annotated with an identifier for the hash function itself.
+
+The only currently supported hash targets are `Message` and `Blob`
+
+The only currently supported cryptographic primitive is [sha256](https://en.wikipedia.org/wiki/SHA-2) (which has a digest length of 32 bytes).
 
 ### Multihash Legacy Encoding
 
 The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multihash is defined as the concatenation of:
 
-- either the character `%` (`0x25`) or the character `&` (`0x26`)
-  - this is sometimes used to distinguish between messages and blobs:
-    - the encoding using `%` is called a (legacy) message (multi)hash
-    - the encoding using `&` is called a (legacy) blob (multi)hash
+- depending on the hash target:
+  - `Message`: the character `%` (`0x25`)
+  - `Blob`: the character `&` (`0x26`)
 - the [canonic](https://tools.ietf.org/html/rfc4648#section-3.5) base64 encoding of the digest itself
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=` characters inside the data or after the necessary padding `=`s
   - it may not omit `=` characters either - the amount of encoding bytes must always be a multiple of four
@@ -94,12 +100,18 @@ Typically, this encoding is stored in a json string.
 
 ### Multihash Compact Encoding
 
-The compact encoding of a multihash is a [binary ctlv encoding](#ctlv-binary-encoding), where the `value` is the raw byte array of the hash, and the type is taken from the following table:
+The compact encoding of a multihash is a [VarU64](#varu64-binary-encoding) indicating the hash target, followed by a [binary ctlv encoding](#ctlv-binary-encoding) for the digest, where the `value` is the raw byte array of the hash, and the type is taken from the following table:
 
-| Cryptographic Primitive | Blob? | Type |
-|-------------------------|-------|------|
-| sha256                  | no    | 40   |
-| sha256                  | yes   | 41   |
+| Cryptographic Primitive | Type |
+|-------------------------|------|
+| sha256                  | 40   |
+
+The VarU64 for the hash target is taken from the following table:
+
+| Hash Target | Int |
+|-------------|-----|
+| Message     | 0   |
+| Blob        | 1   |
 
 ## Multibox
 
