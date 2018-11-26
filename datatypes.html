@@ -242,7 +242,8 @@
 <tr><td> Blob        </td><td> 1   </td></tr>
 </tbody></table>
 <a class="header" href="#multibox" id="multibox"><h2>Multibox</h2></a>
-<p>A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The only currently supported algorithm is <a href="https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages">private-box</a>.</p>
+<p>A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The algorithm identifiers are natural numbers between 0 and 2^64 - 1 (inclusive). Even identifiers are reserved for assignment by the ssb protocol devs, odd identifiers are open for experimentation and/or custom usage.</p>
+<p>The only currently specified algorithm is <a href="https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages">private-box</a>, using the identifier 0.</p>
 <a class="header" href="#multibox-legacy-encoding" id="multibox-legacy-encoding"><h3>Multibox Legacy Encoding</h3></a>
 <p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multibox is defined as the concatenation of:</p>
 <ul>
@@ -253,16 +254,16 @@
 </ul>
 </li>
 <li>the characters <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
-<li>an algorithm-specific suffix, which may not contain the quote character <code>&quot;</code> (<code>0x22</code>)
+<li>the uppercase <a href="https://tools.ietf.org/html/rfc4648#section-6">base32</a> encoding without padding of the identifier, without leading zeros (<code>A</code>s)
 <ul>
-<li>for secret-box, this is the empty string</li>
+<li><strong>the exact base32 variant might still change</strong>: %SlA2ALoa+dCTzQd/0yWrgiRel4kBUd4UKy0L9BpKzPI=.sha256</li>
 </ul>
 </li>
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
-<p><strong>This definition might still change</strong>: %EwwjtvHK7i1MFXnazWTjivGEhdAymQd0xR+BU82XpdM=.sha256</p>
 <a class="header" href="#multibox-compact-encoding" id="multibox-compact-encoding"><h3>Multibox Compact Encoding</h3></a>
-<p>Depends on %EwwjtvHK7i1MFXnazWTjivGEhdAymQd0xR+BU82XpdM=.sha256</p>
+<p>The compact encoding of a multiboxh is the <a href="#varu64-binary-encoding">VarU64</a> binary encoding of the algorithm identifier, followed by a <a href="#varu64-binary-encoding">VarU64</a> indicating the remaining length, followed by that many bytes of data.</p>
+<p>For multibox, the remaining data is simply the cyphertext (<em>not</em> base64 encoded).</p>
 
                     </main>
 
