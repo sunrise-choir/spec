@@ -135,7 +135,9 @@ The VarU64 for the hash target is taken from the following table:
 
 ## Multibox
 
-A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The only currently supported algorithm is [private-box](https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages).
+A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The algorithm identifiers are natural numbers between 0 and 2^64 - 1 (inclusive). Even identifiers are reserved for assignment by the ssb protocol devs, odd identifiers are open for experimentation and/or custom usage.
+
+The only currently specified algorithm is [private-box](https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages), using the identifier 0.
 
 ### Multibox Legacy Encoding
 
@@ -145,13 +147,13 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=`
   - it may not omit `=` characters either - the amount of encoding bytes must always be a multiple of four
 - the characters `.box` (`[0x2E, 0x62, 0x6F, 0x78]`)
-- an algorithm-specific suffix, which may not contain the quote character `"` (`0x22`)
-  - for secret-box, this is the empty string
+- the uppercase [base32](https://tools.ietf.org/html/rfc4648#section-6) encoding without padding of the identifier, without leading zeros (`A`s)
+  - **the exact base32 variant might still change**: %SlA2ALoa+dCTzQd/0yWrgiRel4kBUd4UKy0L9BpKzPI=.sha256
 
 Typically, this encoding is stored in a json string.
 
-**This definition might still change**: %EwwjtvHK7i1MFXnazWTjivGEhdAymQd0xR+BU82XpdM=.sha256
-
 ### Multibox Compact Encoding
 
-Depends on %EwwjtvHK7i1MFXnazWTjivGEhdAymQd0xR+BU82XpdM=.sha256
+The compact encoding of a multiboxh is the [VarU64](#varu64-binary-encoding) binary encoding of the algorithm identifier, followed by a [VarU64](#varu64-binary-encoding) indicating the remaining length, followed by that many bytes of data.
+
+For multibox, the remaining data is simply the cyphertext (*not* base64 encoded).
