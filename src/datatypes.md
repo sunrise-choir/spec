@@ -71,6 +71,26 @@ The compact encoding of a multikey is a [binary ctlv encoding](#ctlv-binary-enco
 |-------------------------|------|
 | ed25519                 | 40   |
 
+## Multifeed
+
+A multifeed represents a scuttlebutt feed. It consists of a feed kind indicator and some additional data depending on the feed kind. The only currently supported feed kind is `multikey`, whose additional data surprisingly enough is a multikey.
+
+### Multifeed Legacy Encoding
+
+The legacy encoding of a multikey multifeed is the same as the legacy encoding of the multikey. The legacy encoding of possible future multifeed kinds will use a different first char than `@`.
+
+### Multifeed Compact Encoding
+
+The compact encoding of a multihash is a [VarU64](#varu64-binary-encoding) indicating the feed kind, followed by a [binary ctlv encoding](#ctlv-binary-encoding) for the kind-specific data.
+
+The VarU64 for the feed kind is taken from the following table:
+
+| Feed Kind | Int |
+|-----------|-----|
+| multikey  | 0   |
+
+For the `multikey` feed kind, the kind-specific data is simply the compact encoding of the multikey.
+
 ## Multihash
 
 A multihash is a pair of:
