@@ -189,6 +189,17 @@
 <table><thead><tr><th> Cryptographic Primitive </th><th> Type </th></tr></thead><tbody>
 <tr><td> ed25519                 </td><td> 40   </td></tr>
 </tbody></table>
+<a class="header" href="#multifeed" id="multifeed"><h2>Multifeed</h2></a>
+<p>A multifeed represents a scuttlebutt feed. It consists of a feed kind indicator and some additional data depending on the feed kind. The only currently supported feed kind is <code>multikey</code>, whose additional data surprisingly enough is a multikey.</p>
+<a class="header" href="#multifeed-legacy-encoding" id="multifeed-legacy-encoding"><h3>Multifeed Legacy Encoding</h3></a>
+<p>The legacy encoding of a multikey multifeed is the same as the legacy encoding of the multikey. The legacy encoding of possible future multifeed kinds will use a different first char than <code>@</code>.</p>
+<a class="header" href="#multifeed-compact-encoding" id="multifeed-compact-encoding"><h3>Multifeed Compact Encoding</h3></a>
+<p>The compact encoding of a multihash is a <a href="#varu64-binary-encoding">VarU64</a> indicating the feed kind, followed by a <a href="#ctlv-binary-encoding">binary ctlv encoding</a> for the kind-specific data.</p>
+<p>The VarU64 for the feed kind is taken from the following table:</p>
+<table><thead><tr><th> Feed Kind </th><th> Int </th></tr></thead><tbody>
+<tr><td> multikey  </td><td> 0   </td></tr>
+</tbody></table>
+<p>For the <code>multikey</code> feed kind, the kind-specific data is simply the compact encoding of the multikey.</p>
 <a class="header" href="#multihash" id="multihash"><h2>Multihash</h2></a>
 <p>A multihash is a pair of:</p>
 <ul>
