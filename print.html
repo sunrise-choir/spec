@@ -295,7 +295,7 @@
 <tr><td> 31    </td><td> Z      </td></tr>
 </tbody></table>
 <p>Due to omitting leading zeros, the suffix for private box (identifier 0) is simply <code>&quot;box&quot;</code>.</p>
-<p>For large identifiers (between 2^60 and 2^64 - 1 inclusive), 13 characters are needed, and the most-significant bit of the leftmost character does not contribute to the decoded value. Identifiers must be encoded such that this ignored bit is set to zero. Put another way: If the identifier encoding takes up 13 characters, it must begin with one of <code>(1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F, G)</code>.</p>
+<p>For large identifiers (between 2^60 and 2^64 - 1 inclusive), 13 characters are needed, and the most-significant bit of the leftmost character does not contribute to the decoded value. Identifiers must be encoded such that this ignored bit is set to zero. Put another way: If the identifier encoding takes up 13 characters, it must begin with one of <code>(1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F)</code>.</p>
 <a class="header" href="#multibox-compact-encoding" id="multibox-compact-encoding"><h3>Multibox Compact Encoding</h3></a>
 <p>The compact encoding of a multiboxh is the <a href="#varu64-binary-encoding">VarU64</a> binary encoding of the algorithm identifier, followed by a <a href="#varu64-binary-encoding">VarU64</a> indicating the remaining length, followed by that many bytes of data.</p>
 <p>For multibox, the remaining data is simply the cyphertext (<em>not</em> base64 encoded).</p>
