@@ -258,13 +258,43 @@
 </ul>
 </li>
 <li>the characters <code>.box</code> (<code>[0x2E, 0x62, 0x6F, 0x78]</code>)</li>
-<li>the uppercase <a href="https://tools.ietf.org/html/rfc4648#section-6">base32</a> encoding without padding of the identifier, without leading zeros (<code>A</code>s)
-<ul>
-<li><strong>the exact base32 variant might still change</strong>: %SlA2ALoa+dCTzQd/0yWrgiRel4kBUd4UKy0L9BpKzPI=.sha256</li>
+<li>the uppercase <a href="https://tools.ietf.org/html/rfc4648#section-6">base32</a> encoding without padding of the identifier, without leading zeros, using the following table (the canonic subset of <a href="http://www.crockford.com/wrmg/base32.html">Crockford's base32</a>):</li>
 </ul>
-</li>
-</ul>
-<p>Typically, this encoding is stored in a json string.</p>
+<table><thead><tr><th> Value </th><th> Symbol </th></tr></thead><tbody>
+<tr><td> 0     </td><td> 0      </td></tr>
+<tr><td> 1     </td><td> 1      </td></tr>
+<tr><td> 2     </td><td> 2      </td></tr>
+<tr><td> 3     </td><td> 3      </td></tr>
+<tr><td> 4     </td><td> 4      </td></tr>
+<tr><td> 5     </td><td> 5      </td></tr>
+<tr><td> 6     </td><td> 6      </td></tr>
+<tr><td> 7     </td><td> 7      </td></tr>
+<tr><td> 8     </td><td> 8      </td></tr>
+<tr><td> 9     </td><td> 9      </td></tr>
+<tr><td> 10    </td><td> A      </td></tr>
+<tr><td> 11    </td><td> B      </td></tr>
+<tr><td> 12    </td><td> C      </td></tr>
+<tr><td> 13    </td><td> D      </td></tr>
+<tr><td> 14    </td><td> E      </td></tr>
+<tr><td> 15    </td><td> F      </td></tr>
+<tr><td> 16    </td><td> G      </td></tr>
+<tr><td> 17    </td><td> H      </td></tr>
+<tr><td> 18    </td><td> J      </td></tr>
+<tr><td> 19    </td><td> K      </td></tr>
+<tr><td> 20    </td><td> M      </td></tr>
+<tr><td> 21    </td><td> N      </td></tr>
+<tr><td> 22    </td><td> P      </td></tr>
+<tr><td> 23    </td><td> Q      </td></tr>
+<tr><td> 24    </td><td> R      </td></tr>
+<tr><td> 25    </td><td> S      </td></tr>
+<tr><td> 26    </td><td> T      </td></tr>
+<tr><td> 27    </td><td> V      </td></tr>
+<tr><td> 28    </td><td> W      </td></tr>
+<tr><td> 29    </td><td> X      </td></tr>
+<tr><td> 30    </td><td> Y      </td></tr>
+<tr><td> 31    </td><td> Z      </td></tr>
+</tbody></table>
+<p>Due to omitting leading zeros, the suffix for private box (identifier 0) is simply <code>&quot;box&quot;</code></p>
 <a class="header" href="#multibox-compact-encoding" id="multibox-compact-encoding"><h3>Multibox Compact Encoding</h3></a>
 <p>The compact encoding of a multiboxh is the <a href="#varu64-binary-encoding">VarU64</a> binary encoding of the algorithm identifier, followed by a <a href="#varu64-binary-encoding">VarU64</a> indicating the remaining length, followed by that many bytes of data.</p>
 <p>For multibox, the remaining data is simply the cyphertext (<em>not</em> base64 encoded).</p>
