@@ -190,6 +190,6 @@ For large identifiers (between 2^60 and 2^64 - 1 inclusive), 13 characters are n
 
 ### Multibox Compact Encoding
 
-The compact encoding of a multiboxh is the [VarU64](#varu64-binary-encoding) binary encoding of the algorithm identifier, followed by a [VarU64](#varu64-binary-encoding) indicating the remaining length, followed by that many bytes of data.
+The compact encoding of a multibox is the [VarU64](#varu64-binary-encoding) binary encoding of the algorithm identifier, followed by a [VarU64](#varu64-binary-encoding) indicating the remaining length, followed by that many bytes of data.
 
-For multibox, the remaining data is simply the cyphertext (*not* base64 encoded).
+For private box, the remaining data is simply the cyphertext (*not* base64 encoded).
