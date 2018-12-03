@@ -147,10 +147,44 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
   - [ietf rfc 4648, section 4](https://tools.ietf.org/html/rfc4648#section-4), disallowing superflous `=`
   - it may not omit `=` characters either - the amount of encoding bytes must always be a multiple of four
 - the characters `.box` (`[0x2E, 0x62, 0x6F, 0x78]`)
-- the uppercase [base32](https://tools.ietf.org/html/rfc4648#section-6) encoding without padding of the identifier, without leading zeros (`A`s)
-  - **the exact base32 variant might still change**: %SlA2ALoa+dCTzQd/0yWrgiRel4kBUd4UKy0L9BpKzPI=.sha256
+- the uppercase [base32](https://tools.ietf.org/html/rfc4648#section-6) encoding without padding of the identifier, without leading zeros, using the following table (the canonic subset of [Crockford's base32](http://www.crockford.com/wrmg/base32.html)):
 
-Typically, this encoding is stored in a json string.
+| Value | Symbol |
+|-------|--------|
+| 0     | 0      |
+| 1     | 1      |
+| 2     | 2      |
+| 3     | 3      |
+| 4     | 4      |
+| 5     | 5      |
+| 6     | 6      |
+| 7     | 7      |
+| 8     | 8      |
+| 9     | 9      |
+| 10    | A      |
+| 11    | B      |
+| 12    | C      |
+| 13    | D      |
+| 14    | E      |
+| 15    | F      |
+| 16    | G      |
+| 17    | H      |
+| 18    | J      |
+| 19    | K      |
+| 20    | M      |
+| 21    | N      |
+| 22    | P      |
+| 23    | Q      |
+| 24    | R      |
+| 25    | S      |
+| 26    | T      |
+| 27    | V      |
+| 28    | W      |
+| 29    | X      |
+| 30    | Y      |
+| 31    | Z      |
+
+Due to omitting leading zeros, the suffix for private box (identifier 0) is simply `"box"`
 
 ### Multibox Compact Encoding
 
