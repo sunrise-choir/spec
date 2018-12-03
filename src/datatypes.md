@@ -184,7 +184,9 @@ The legacy encoding is necessary to keep backwards-compatibility with old ssb da
 | 30    | Y      |
 | 31    | Z      |
 
-Due to omitting leading zeros, the suffix for private box (identifier 0) is simply `"box"`
+Due to omitting leading zeros, the suffix for private box (identifier 0) is simply `"box"`.
+
+For large identifiers (between 2^60 and 2^64 - 1 inclusive), 13 characters are needed, and the most-significant bit of the leftmost character does not contribute to the decoded value. Identifiers must be encoded such that this ignored bit is set to zero. Put another way: If the identifier encoding takes up 13 characters, it must begin with one of `(1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F, G)`.
 
 ### Multibox Compact Encoding
 
