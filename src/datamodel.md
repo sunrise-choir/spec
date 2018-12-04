@@ -272,10 +272,16 @@ At indentation level `indent`, the object `{ s_0: v_0, ..., s_n: v_n}` is encode
   - append `indent` many space characters (`0x20`)
   - append the utf-8 string `}` (`0x7D`)
 - The order in which to serialize the entries `s_i: v_i` is not fully specified, but there are some constraints:
-  - intuitively: Natural numbers are sorted ascendingly
+  - intuitively: Natural numbers less than 2^32 - 1 are sorted ascendingly
   - formally:
-    - if there is an entry with the key `"0"` (`0x30`), the entry must be the first to be serialized
-    - all entries whose keys begin with a nonzero decimal digit (1 - 9 (`0x31` - `0x39`)) followed by zero or more arbitrary decimal digits (0 - 9 (`0x30` - `0x39`)) and consists solely of such digits, must be serialized before all other entries (but after an entry with key `"0"` if one exists). Amongst themselves, these keys are sorted:
+    - a key is called a `more-or-less integer key` if it is either the string `"0"`, or a nonzero decimal digit (1 - 9 (`0x31` - `0x39`)) followed by zero or more arbitrary decimal digits (0 - 9 (`0x30` - `0x39`)) and consists solely of such digits
+    - a key is called an `int key` if it:
+      - is a `more-or-less integer key`
+      - its numeric value is strictly less than `2^32 - 1`
+        - no, there's no off-by one error here: `0xfffffffe` is an `int key`, whereas `0xffffffff` is not
+        - Why? We have no idea either
+    - all entries with `int key`s must be serialized before all other entries
+    - among themselves, the `int key`s are sorted:
       - by length first (ascending), using
       - numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
         - note that this coincides with sorting the decimally encoded numbers by numeric value
