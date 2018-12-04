@@ -142,26 +142,121 @@
 <p>Ssb messages all use the same abstract data model, but there are different situations where they use different encodings. An encoding used for signing the data has different requirements than an encoding used for transmitting the data, which again has different requirements than an encoding used for persisten storage.</p>
 <p>Encodings for persistent storage are not specified in this document, but is crucial for all ssb implementations to compute the exact same signatures, and to send data in a format that can be understood by other implementations. We call these encodings <em>signing encoding</em> and <em>transport encoding</em> respectively.</p>
 <p>The ssb protocol was initially implemented in javascript, and it relied heavily on implicit behavior of the <a href="https://nodejs.org/en/">node js</a> runtime. It has since switched to a more carefully designed message format, but the old fomat still needs to be supported to keep backwards-compatibility.</p>
+<a class="header" href="#hsdt-data" id="hsdt-data"><h2>HSDT Data</h2></a>
+<p>This section describes the new ssb message format. It is a superset of the json-based legacy data format.</p>
+<a class="header" href="#abstract-data-model" id="abstract-data-model"><h3>Abstract Data Model</h3></a>
+<p>The hsdt data model is based upon cbor. Some features were omitted to ensure canonicity, others were added for ssb-specific use cases.</p>
+<a class="header" href="#null" id="null"><h6>Null</h6></a>
+<p><code>null</code> is an hsdt value that carries <a href="https://en.wikipedia.org/wiki/Unit_type">no information</a>.</p>
+<a class="header" href="#booleans" id="booleans"><h6>Booleans</h6></a>
+<p><code>true</code> and <code>false</code> are hsdt values, called <em>booleans</em>.</p>
+<a class="header" href="#integers" id="integers"><h6>Integers</h6></a>
+<p>Hsdt allows signed and unsigned fixed-width integers of the sizes 8, 16, 32 and 64 bytes. They are referred to as <code>i8</code>, <code>i16</code>, <code>i32</code> and <code>i64</code> (signed) and <code>u8</code>, <code>u16</code>, <code>u32</code> and <code>u64</code> (unsigned).</p>
+<a class="header" href="#floating-point-numbers" id="floating-point-numbers"><h6>Floating Point Numbers</h6></a>
+<p>Hsdt allows the 32 bit and 64 bit floating point numbers from the <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> standard. They are referred to as <code>f32</code> and <code>f64</code>.</p>
+<p>The only difference to IEEE 754: There is just a single value to represent <code>NaN</code> per float type, not multiple ones.</p>
+<a class="header" href="#multifeeds" id="multifeeds"><h6>Multifeeds</h6></a>
+<p>A <a href="../datatypes.html#multifeed">multifeed</a> is an hsdt value.</p>
+<a class="header" href="#multihash" id="multihash"><h6>Multihash</h6></a>
+<p>A <a href="../datatypes.html#multihash">multihash</a> is an hsdt value.</p>
+<a class="header" href="#byte-strings" id="byte-strings"><h6>Byte Strings</h6></a>
+<p>An ordered sequence of bytes of length between <code>0</code> and <code>2^64 - 1</code> (inclusive) is an hsdt value, called a <em>byte string</em>. Such a byte string may include null bytes.</p>
+<a class="header" href="#utf-8-strings" id="utf-8-strings"><h6>UTF-8 Strings</h6></a>
+<p>An ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a> of length between <code>0</code> and <code>2^64 - 1</code> (inclusive) is an hsdt value, called a <em>utf-8 string</em>. Such a utf-8 string may include null bytes.</p>
+<a class="header" href="#arrays" id="arrays"><h6>Arrays</h6></a>
+<p>Let <code>n</code> be a natural number less than <code>2^64</code>, and let <code>v_0, ..., v_n</code> be hsdt values.</p>
+<p>The ordered sequence <code>[v_0, ..., v_n]</code> is an hsdt value, called an <em>array</em>.</p>
+<a class="header" href="#sets" id="sets"><h6>Sets</h6></a>
+<p>Let <code>n</code> be a natural number less than <code>2^64</code>, and let <code>v_0, ..., v_n</code> be hsdt values.</p>
+<p>The (unordered) set <code>#{v_0, ..., v_n}</code> is an hsdt value, called a <em>set</em>.</p>
+<a class="header" href="#maps" id="maps"><h6>Maps</h6></a>
+<p>Let <code>n</code> be a natural number less than <code>2^64</code>, let <code>k_0, ..., k_n</code> be pairwise distinct hsdt values, and let <code>v_0, ..., v_n</code> be arbitrary hsdt values.</p>
+<p>The (unordered) set of pairs <code>(k_i, v_i)</code> for all <code>0 &lt;= i &lt;= n</code> is a legacy value, called a <em>map</em>. The pairs are called <em>entries</em>, the first entries of the pairs are called <em>keys</em>, and the second entries of the pairs are called <em>values</em>.</p>
+<a class="header" href="#default-encoding" id="default-encoding"><h3>Default Encoding</h3></a>
+<p>This encoding of hsdt values is based on a canonical subset of cbor, extended to express the non-cbor values (sets, multifeeds, multihashes). It is used for both message signing and the exchange of messages between processes.</p>
+<p>The default encoding is defined as follows:</p>
+<a class="header" href="#encoding-null" id="encoding-null"><h6>Encoding Null</h6></a>
+<p><em>This is identical to cbor.</em>
+<code>null</code> is encoded as the byte <code>0b111_10110</code> (<code>0xf6</code>).</p>
+<a class="header" href="#encoding-booleans" id="encoding-booleans"><h6>Encoding Booleans</h6></a>
+<p><em>This is identical to cbor.</em>
+<code>true</code> is encoded as the byte <code>0b111_10101</code> (<code>0xf5</code>).
+<code>false</code> is encoded as the byte <code>0b111_10100</code> (<code>0xf4</code>).</p>
+<a class="header" href="#encoding-integers" id="encoding-integers"><h6>Encoding Integers</h6></a>
+<p>Integers are encoded with a tag byte indicating size and signedness, followed by the big-endian representation of the integer, using <a href="https://en.wikipedia.org/wiki/Two&#x27;s_complement">two's complement</a> for signed integers. Note that this slightly differs from how cbor handles integers.</p>
+<p>The tag byte is taken from the following table:</p>
+<table><thead><tr><th> Integer Type </th><th> Tag Binary  </th><th> Tag Hex </th></tr></thead><tbody>
+<tr><td> u8           </td><td> 0b000_11000 </td><td> 0x18    </td></tr>
+<tr><td> u16          </td><td> 0b000_11001 </td><td> 0x19    </td></tr>
+<tr><td> u32          </td><td> 0b000_11010 </td><td> 0x1a    </td></tr>
+<tr><td> u64          </td><td> 0b000_11011 </td><td> 0x1b    </td></tr>
+<tr><td> i8           </td><td> 0b001_11000 </td><td> 0x38    </td></tr>
+<tr><td> i16          </td><td> 0b001_11001 </td><td> 0x39    </td></tr>
+<tr><td> i32          </td><td> 0b001_11010 </td><td> 0x3a    </td></tr>
+<tr><td> i64          </td><td> 0b001_11011 </td><td> 0x3b    </td></tr>
+</tbody></table>
+<a class="header" href="#encoding-floating-point-numbers" id="encoding-floating-point-numbers"><h6>Encoding Floating Point Numbers</h6></a>
+<p><em>This is identical to cbor.</em></p>
+<p>A 32 bit floating point number is encoded as the byte <code>0b111_11010</code> (<code>0xfa</code>), followed by the four bytes of the number (sign, exponent, fraction in that order).</p>
+<p>A 64 bit floating point number is encoded as the byte <code>0b111_11011</code> (<code>0xfb</code>), followed by the eight bytes of the number (sign, exponent, fraction in that order).</p>
+<a class="header" href="#encoding-multifeeds" id="encoding-multifeeds"><h6>Encoding Multifeeds</h6></a>
+<p>A multifeed is encoded as the byte <code>0b111_11100</code> (<code>0xfc</code>), followed by the <a href="../datatypes.html#multifeed-compact-encoding">compact encoding</a> of the multifeed.</p>
+<a class="header" href="#encoding-multihashes" id="encoding-multihashes"><h6>Encoding Multihashes</h6></a>
+<p>A multihash is encoded as the byte <code>0b111_11101</code> (<code>0xfd</code>), followed by the <a href="../datatypes.html#multihash-compact-encoding">compact encoding</a> of the multihash.</p>
+<a class="header" href="#encoding-byte-strings" id="encoding-byte-strings"><h6>Encoding Byte Strings</h6></a>
+<p>Byte strings are encoded as in cbor, with the following restrictions:</p>
+<ul>
+<li>no indefinite length byte strings (additional type <code>31</code> is not allowed)</li>
+<li>byte strings must use the shortest possible encoding of their length</li>
+</ul>
+<a class="header" href="#encoding-utf-8-strings" id="encoding-utf-8-strings"><h6>Encoding Utf-8 Strings</h6></a>
+<p>Utf-8 strings are encoded as in cbor (called &quot;text strings&quot; there), with the following restrictions:</p>
+<ul>
+<li>no indefinite length utf-8 strings (additional type <code>31</code> is not allowed)</li>
+<li>utf-8 strings must use the shortest possible encoding of their length</li>
+</ul>
+<a class="header" href="#encoding-arrays" id="encoding-arrays"><h6>Encoding Arrays</h6></a>
+<p>Arrays are encoded as in cbor, with the following restrictions:</p>
+<ul>
+<li>no indefinite length arrays strings (additional type <code>31</code> is not allowed)</li>
+<li>array must use the shortest possible encoding of their length</li>
+</ul>
+<a class="header" href="#encoding-sets" id="encoding-sets"><h6>Encoding Sets</h6></a>
+<p>Sets are encoded just like arrays, except the second-most-significant bit of the first byte is <code>1</code> rather than <code>0</code> (e.g. the empty set is <code>0b110_00000</code> or <code>0xc0</code>).</p>
+<p>The entries of the set must be sorted lexicographically by their encoding. When decoding, encountering an entry that is not lexicographically greated than its predecessor must be treated as an error. Note that this also disallows duplicate entries.</p>
+<a class="header" href="#encoding-maps" id="encoding-maps"><h6>Encoding Maps</h6></a>
+<p>Maps are encoded as in cbor, with the following restrictions:</p>
+<ul>
+<li>no indefinite length arrays strings (additional type <code>31</code> is not allowed)</li>
+<li>maps must use the shortest possible encoding of their length</li>
+</ul>
+<p>The keys of the map must be sorted lexicographically by their encoding. When decoding, encountering a key that is not lexicographically greated than its predecessor must be treated as an error. Note that this also disallows duplicate keys.</p>
+<a class="header" href="#non-canonic-encoding" id="non-canonic-encoding"><h3>Non-Canonic Encoding</h3></a>
+<p>The non-canonic hsdt encoding lifts the restriction that sets entries and map keys must be sorted lexicographically. Note that:</p>
+<ul>
+<li>duplicate set entries or map keys are still disallowed</li>
+<li>no other restrictions are lifted (in particular, length indicators for strings/collections must still be as small as possible)</li>
+</ul>
 <a class="header" href="#legacy-data" id="legacy-data"><h2>Legacy Data</h2></a>
 <p>This section describes the message format that was originally used by ssb. The protocol has since moved on, everything here should be considered deprecated. But for backwards compatibility, ssb servers still need to understand, verify and relay old messages.</p>
 <p>Legacy messages have been deprecated because their design emerged organically through reliance on the default behavior of certain features of <a href="https://nodejs.org/en/">node js</a>. People (including the authors of this specification) have called the legacy message format &quot;bizarre&quot; and worse, and that is entirely justified. But when during reading you inevitably thing &quot;How could anybody end up with this, I could have done a much better job.&quot;, then remember: Maybe you could have, but you didn't.</p>
-<a class="header" href="#abstract-data-model" id="abstract-data-model"><h3>Abstract Data Model</h3></a>
+<a class="header" href="#abstract-data-model-1" id="abstract-data-model-1"><h3>Abstract Data Model</h3></a>
 <p>The legacy data model describes all of the free-form data that can be carried in a legacy message. It is close to the <a href="http://json.org/">json</a> data model, but with a few differences. The definition came about as the set of javascript values created by <code>JSON.parse(json)</code> for which <a href="%EyGGCcjAbaShKFCMxXKYiZjQe17SR298D0SLTuKmZpo=.sha256"><code>json === JSON.stringify(JSON.parse(json))</code></a> (javascript code).</p>
 <p>Defined in a language-agnostic way:</p>
-<a class="header" href="#null" id="null"><h6>Null</h6></a>
+<a class="header" href="#null-1" id="null-1"><h6>Null</h6></a>
 <p><code>null</code> is a legacy value that carries <a href="https://en.wikipedia.org/wiki/Unit_type">no information</a>.</p>
-<a class="header" href="#booleans" id="booleans"><h6>Booleans</h6></a>
+<a class="header" href="#booleans-1" id="booleans-1"><h6>Booleans</h6></a>
 <p><code>true</code> and <code>false</code> are legacy values, called <em>booleans</em>.</p>
 <a class="header" href="#strings" id="strings"><h6>Strings</h6></a>
 <p>An ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a> of length between <code>0</code> and <code>2^53 - 1</code> (inclusive) is a legacy value, called a <em>string</em>. Such a string may include null bytes.</p>
 <a class="header" href="#floats" id="floats"><h6>Floats</h6></a>
 <p>An <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> double precision (64 bit) floating point number that is none of <code>Infinity</code>, <code>-Infinity</code>, <code>-0</code> or <code>NaN</code> is a legacy value, called a <em>float</em>.</p>
-<a class="header" href="#arrays" id="arrays"><h6>Arrays</h6></a>
+<a class="header" href="#arrays-1" id="arrays-1"><h6>Arrays</h6></a>
 <p>Let <code>n</code> be a natural number less than <code>2^32</code>, and let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>.</p>
 <p>The ordered sequence <code>[v_0, ..., v_n]</code> is a legacy value, called an <em>array</em>.</p>
 <a class="header" href="#objects" id="objects"><h6>Objects</h6></a>
 <p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>s_0, ..., s_n</code> be pairwise distinct <a href="#strings">strings</a>, and let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>.</p>
-<p>The (unordered) set of pairs <code>(s_i, s_i)</code> for all <code>0 &lt;= i &lt;= n</code> is a legacy value, called a <em>object</em>. The pairs are called <em>entries</em>, the strings are called <em>keys</em>, and the legacy values are called <em>values</em>.</p>
+<p>The (unordered) set of pairs <code>(s_i, v_i)</code> for all <code>0 &lt;= i &lt;= n</code> is a legacy value, called a <em>object</em>. The pairs are called <em>entries</em>, the strings are called <em>keys</em>, and the legacy values are called <em>values</em>.</p>
 <a class="header" href="#signing-encoding" id="signing-encoding"><h3>Signing Encoding</h3></a>
 <p>The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the freely-orderable object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.</p>
 <p>The signing encoding is defined as follows:</p>
@@ -267,11 +362,23 @@
 </li>
 <li>The order in which to serialize the entries <code>s_i: v_i</code> is not fully specified, but there are some constraints:
 <ul>
-<li>intuitively: Natural numbers are sorted ascendingly</li>
+<li>intuitively: Natural numbers less than 2^32 - 1 are sorted ascendingly</li>
 <li>formally:
 <ul>
-<li>if there is an entry with the key <code>&quot;0&quot;</code> (<code>0x30</code>), the entry must be the first to be serialized</li>
-<li>all entries whose keys begin with a nonzero decimal digit (1 - 9 (<code>0x31</code> - <code>0x39</code>)) followed by zero or more arbitrary decimal digits (0 - 9 (<code>0x30</code> - <code>0x39</code>)) and consists solely of such digits, must be serialized before all other entries (but after an entry with key <code>&quot;0&quot;</code> if one exists). Amongst themselves, these keys are sorted:
+<li>a key is called a <code>more-or-less integer key</code> if it is either the string <code>&quot;0&quot;</code>, or a nonzero decimal digit (1 - 9 (<code>0x31</code> - <code>0x39</code>)) followed by zero or more arbitrary decimal digits (0 - 9 (<code>0x30</code> - <code>0x39</code>)) and consists solely of such digits</li>
+<li>a key is called an <code>int key</code> if it:
+<ul>
+<li>is a <code>more-or-less integer key</code></li>
+<li>its numeric value is strictly less than <code>2^32 - 1</code>
+<ul>
+<li>no, there's no off-by one error here: <code>0xfffffffe</code> is an <code>int key</code>, whereas <code>0xffffffff</code> is not</li>
+<li>Why? We have no idea either</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>all entries with <code>int key</code>s must be serialized before all other entries</li>
+<li>among themselves, the <code>int key</code>s are sorted:
 <ul>
 <li>by length first (ascending), using</li>
 <li>numeric value as a tie breaker (the key whose raw bytes interpreted as a natural number are larger is serialized later)
