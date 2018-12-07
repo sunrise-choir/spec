@@ -97,9 +97,9 @@ The tag byte is taken from the following table:
 ###### Encoding Floating Point Numbers
 *This is __nearly__ identical to cbor.*
 
-A 32 bit floating point number is encoded as the byte `0b111_11010` (`0xfa`), followed by the four bytes of the number (sign, exponent, fraction in that order). `NaN` is encoded as `0xfa7fc00000`.
+A 32 bit floating point number is encoded as the byte `0b111_11010` (`0xfa`), followed by the four bytes of the number (sign, exponent, fraction in that order). `NaN` is encoded as `0xffffffffff`.
 
-A 64 bit floating point number is encoded as the byte `0b111_11011` (`0xfb`), followed by the eight bytes of the number (sign, exponent, fraction in that order). `NaN` is encoded as `0xfb7ff8000000000000`.
+A 64 bit floating point number is encoded as the byte `0b111_11011` (`0xfb`), followed by the eight bytes of the number (sign, exponent, fraction in that order). `NaN` is encoded as `0xffffffffffffffffff`.
 
 ###### Encoding Multifeeds
 A multifeed is encoded as the byte `0b111_11100` (`0xfc`), followed by the [compact encoding](../datatypes.md#multifeed-compact-encoding) of the multifeed.
