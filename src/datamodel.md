@@ -61,7 +61,7 @@ The (unordered) set `#{v_0, ..., v_n}` is an hsdt value, called a *set*.
 ###### Maps
 Let `n` be a natural number less than `2^64`, let `k_0, ..., k_n` be pairwise distinct hsdt values, and let `v_0, ..., v_n` be arbitrary hsdt values.
 
-The (unordered) set of pairs `(k_i, v_i)` for all `0 <= i <= n` is a legacy value, called a *map*. The pairs are called *entries*, the first entries of the pairs are called *keys*, and the second entries of the pairs are called *values*.
+The (unordered) set of pairs `(k_i, v_i)` for all `0 <= i <= n` is an hsdt value, called a *map*. The pairs are called *entries*, the first entries of the pairs are called *keys*, and the second entries of the pairs are called *values*.
 
 ### Default Encoding
 
@@ -95,11 +95,11 @@ The tag byte is taken from the following table:
 | i64          | 0b001_11011 | 0x3b    |
 
 ###### Encoding Floating Point Numbers
-*This is identical to cbor.*
+*This is __nearly__ identical to cbor.*
 
-A 32 bit floating point number is encoded as the byte `0b111_11010` (`0xfa`), followed by the four bytes of the number (sign, exponent, fraction in that order).
+A 32 bit floating point number is encoded as the byte `0b111_11010` (`0xfa`), followed by the four bytes of the number (sign, exponent, fraction in that order). `NaN` is encoded as `0xfa7fc00000`.
 
-A 64 bit floating point number is encoded as the byte `0b111_11011` (`0xfb`), followed by the eight bytes of the number (sign, exponent, fraction in that order).
+A 64 bit floating point number is encoded as the byte `0b111_11011` (`0xfb`), followed by the eight bytes of the number (sign, exponent, fraction in that order). `NaN` is encoded as `0xfb7ff8000000000000`.
 
 ###### Encoding Multifeeds
 A multifeed is encoded as the byte `0b111_11100` (`0xfc`), followed by the [compact encoding](../datatypes.md#multifeed-compact-encoding) of the multifeed.
