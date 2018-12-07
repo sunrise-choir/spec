@@ -360,8 +360,8 @@
 </tbody></table>
 <a class="header" href="#encoding-floating-point-numbers" id="encoding-floating-point-numbers"><h6>Encoding Floating Point Numbers</h6></a>
 <p><em>This is <strong>nearly</strong> identical to cbor.</em></p>
-<p>A 32 bit floating point number is encoded as the byte <code>0b111_11010</code> (<code>0xfa</code>), followed by the four bytes of the number (sign, exponent, fraction in that order). <code>NaN</code> is encoded as <code>0xfa7fc00000</code>.</p>
-<p>A 64 bit floating point number is encoded as the byte <code>0b111_11011</code> (<code>0xfb</code>), followed by the eight bytes of the number (sign, exponent, fraction in that order). <code>NaN</code> is encoded as <code>0xfb7ff8000000000000</code>.</p>
+<p>A 32 bit floating point number is encoded as the byte <code>0b111_11010</code> (<code>0xfa</code>), followed by the four bytes of the number (sign, exponent, fraction in that order). <code>NaN</code> is encoded as <code>0xffffffffff</code>.</p>
+<p>A 64 bit floating point number is encoded as the byte <code>0b111_11011</code> (<code>0xfb</code>), followed by the eight bytes of the number (sign, exponent, fraction in that order). <code>NaN</code> is encoded as <code>0xffffffffffffffffff</code>.</p>
 <a class="header" href="#encoding-multifeeds" id="encoding-multifeeds"><h6>Encoding Multifeeds</h6></a>
 <p>A multifeed is encoded as the byte <code>0b111_11100</code> (<code>0xfc</code>), followed by the <a href="../datatypes.html#multifeed-compact-encoding">compact encoding</a> of the multifeed.</p>
 <a class="header" href="#encoding-multihashes" id="encoding-multihashes"><h6>Encoding Multihashes</h6></a>
