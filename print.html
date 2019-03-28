@@ -32,7 +32,10 @@
     </head>
     <body class="light">
         <!-- Provide site root to javascript -->
-        <script type="text/javascript">var path_to_root = "";</script>
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = "light";
+        </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script type="text/javascript">
@@ -54,7 +57,7 @@
         <script type="text/javascript">
             var theme;
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
-            if (theme === null || theme === undefined) { theme = 'light'; }
+            if (theme === null || theme === undefined) { theme = default_theme; }
             document.body.className = theme;
             document.querySelector('html').className = theme + ' js';
         </script>
@@ -72,7 +75,7 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li class="affix"><a href="introduction.html">Introduction</a></li><li><a href="datatypes.html"><strong aria-hidden="true">1.</strong> Common Datatypes</a></li><li><a href="datamodel.html"><strong aria-hidden="true">2.</strong> Datamodel</a></li><li><a href="messages.html"><strong aria-hidden="true">3.</strong> Feeds and Messages</a></li></ol>
+            <ol class="chapter"><li class="affix"><a href="introduction.html">Introduction</a></li><li><a href="feed/index.html"><strong aria-hidden="true">1.</strong> Feed</a></li><li><ol class="section"><li><a href="feed/datatypes.html"><strong aria-hidden="true">1.1.</strong> Common Datatypes</a></li><li><a href="feed/datamodel.html"><strong aria-hidden="true">1.2.</strong> Datamodel</a></li><li><a href="feed/messages.html"><strong aria-hidden="true">1.3.</strong> Feeds and Messages</a></li></ol></li></ol>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -89,7 +92,7 @@
                                 <i class="fa fa-paint-brush"></i>
                             </button>
                             <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                                <li role="none"><button role="menuitem" class="theme" id="light">Light <span class="default">(default)</span></button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
                                 <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                                 <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                                 <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -108,6 +111,7 @@
                             <a href="print.html" title="Print this book" aria-label="Print this book">
                                 <i id="print-button" class="fa fa-print"></i>
                             </a>
+                            
                         </div>
                     </div>
                 </div>
@@ -137,9 +141,16 @@
                 <div id="content" class="content">
                     <main>
                         <a class="header" href="#introduction" id="introduction"><h1>Introduction</h1></a>
+<p>TODO (mw) re-write this.</p>
 <p>This document is the specification of the <a href="(https://www.scuttlebutt.nz/)">secure-scuttlebutt</a> protocol (ssb). The primary audience are developers who need a thorough understanding of protocol internals, for example because they want to implement it themselves. The specificaiton is not intended for developers who want to build applications on top of ssb. Ssb provides nice abstractions to those developer, hiding the nitty-gritty details. This spec however is all about those details.</p>
 <p>It is possible to read through the spec from end to end, but it's not an easy read. It is structured into different sections, each dealing with a different aspect of the protocol. The sections begin with a high-level overview of the problem space, and then delve into the details. In the description of those details, the highest importance is given to unambiguity. If you can not tell <em>exactly</em> how something works, it is a bug in the spec.</p>
 <!-- TODO add links to test data and rust reference impl -->
+<a class="header" href="#feed-spec" id="feed-spec"><h1>Feed spec</h1></a>
+<p>TODO split sub-pages into</p>
+<ul>
+<li>SSBC Feed spec</li>
+<li>Aljoscha Feed spec</li>
+</ul>
 <a class="header" href="#common-datatypes" id="common-datatypes"><h1>Common Datatypes</h1></a>
 <p>A few datatypes appear throughout this spec, it makes sense to introduce them in one single place.</p>
 <p>An overarching theme of various parts of the ssb protocol(s) is that of future-proofness. The protocol will need to adapt itself to new circumstances, such as new transport channels or broken cryptographic primitives. A simple way to keep flexibility are self-describing multiformats, where the data is prefixed by an identifier (and in some cases its expected length). New data types can be introduced by simply assigning a new identifier. Older software can detect data types it doesn't understand yet, and react accordingly.</p>
@@ -319,9 +330,9 @@
 <p>Hsdt allows the 32 bit and 64 bit floating point numbers from the <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> standard. They are referred to as <code>f32</code> and <code>f64</code>.</p>
 <p>The only difference to IEEE 754: There is just a single value to represent <code>NaN</code> per float type, not multiple ones.</p>
 <a class="header" href="#multifeeds" id="multifeeds"><h6>Multifeeds</h6></a>
-<p>A <a href="../datatypes.html#multifeed">multifeed</a> is an hsdt value.</p>
+<p>A <a href="feed/../datatypes.html#multifeed">multifeed</a> is an hsdt value.</p>
 <a class="header" href="#multihash-1" id="multihash-1"><h6>Multihash</h6></a>
-<p>A <a href="../datatypes.html#multihash">multihash</a> is an hsdt value.</p>
+<p>A <a href="feed/../datatypes.html#multihash">multihash</a> is an hsdt value.</p>
 <a class="header" href="#byte-strings" id="byte-strings"><h6>Byte Strings</h6></a>
 <p>An ordered sequence of bytes of length between <code>0</code> and <code>2^64 - 1</code> (inclusive) is an hsdt value, called a <em>byte string</em>. Such a byte string may include null bytes.</p>
 <a class="header" href="#utf-8-strings" id="utf-8-strings"><h6>UTF-8 Strings</h6></a>
@@ -363,9 +374,9 @@
 <p>A 32 bit floating point number is encoded as the byte <code>0b111_11010</code> (<code>0xfa</code>), followed by the four bytes of the number (sign, exponent, fraction in that order). <code>NaN</code> is encoded as <code>0xffffffffff</code>.</p>
 <p>A 64 bit floating point number is encoded as the byte <code>0b111_11011</code> (<code>0xfb</code>), followed by the eight bytes of the number (sign, exponent, fraction in that order). <code>NaN</code> is encoded as <code>0xffffffffffffffffff</code>.</p>
 <a class="header" href="#encoding-multifeeds" id="encoding-multifeeds"><h6>Encoding Multifeeds</h6></a>
-<p>A multifeed is encoded as the byte <code>0b111_11100</code> (<code>0xfc</code>), followed by the <a href="../datatypes.html#multifeed-compact-encoding">compact encoding</a> of the multifeed.</p>
+<p>A multifeed is encoded as the byte <code>0b111_11100</code> (<code>0xfc</code>), followed by the <a href="feed/../datatypes.html#multifeed-compact-encoding">compact encoding</a> of the multifeed.</p>
 <a class="header" href="#encoding-multihashes" id="encoding-multihashes"><h6>Encoding Multihashes</h6></a>
-<p>A multihash is encoded as the byte <code>0b111_11101</code> (<code>0xfd</code>), followed by the <a href="../datatypes.html#multihash-compact-encoding">compact encoding</a> of the multihash.</p>
+<p>A multihash is encoded as the byte <code>0b111_11101</code> (<code>0xfd</code>), followed by the <a href="feed/../datatypes.html#multihash-compact-encoding">compact encoding</a> of the multihash.</p>
 <a class="header" href="#encoding-byte-strings" id="encoding-byte-strings"><h6>Encoding Byte Strings</h6></a>
 <p>Byte strings are encoded as in cbor, with the following restrictions:</p>
 <ul>
@@ -667,14 +678,14 @@ TODO insert new format here -->
 <a class="header" href="#legacy-metadata" id="legacy-metadata"><h2>Legacy Metadata</h2></a>
 <p>The abstract model for legacy metadata is a tuple containing the following entries:</p>
 <ul>
-<li><code>previous</code>: either a <a href="./datatypes.html#multihash">multihash</a>, or the distinct value <code>null</code></li>
-<li><code>author</code>: a <a href="./datatypes.html#multikey">multikey</a></li>
+<li><code>previous</code>: either a <a href="feed/./datatypes.html#multihash">multihash</a>, or the distinct value <code>null</code></li>
+<li><code>author</code>: a <a href="feed/./datatypes.html#multikey">multikey</a></li>
 <li><code>sequence</code>: an unsigned 53 bit integer</li>
 <li><code>timestamp</code>: an IEEE 754 64 bit float except the infinities, negative zero, and <code>NaN</code>s</li>
-<li><code>content</code>: a <a href="./datamodel.html#abstract-data-model">legacy data value</a> that is either:
+<li><code>content</code>: a <a href="feed/./datamodel.html#abstract-data-model">legacy data value</a> that is either:
 <ul>
 <li>an object containing an entry <code>&quot;type&quot;</code>, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16</li>
-<li>a <a href="./datatypes.html#multibox">multibox</a></li>
+<li>a <a href="feed/./datatypes.html#multibox">multibox</a></li>
 </ul>
 </li>
 <li><code>swapped</code>: a boolean indicating how to encode the metadata</li>
@@ -687,8 +698,8 @@ TODO insert new format here -->
 <a class="header" href="#legacy-json-encoding" id="legacy-json-encoding"><h3>Legacy Json Encoding</h3></a>
 <p>Legacy metadata can be encoded as json, just like regular legacy data. The json encoding is a json object containing the entries listed above, with the following additional regulations:</p>
 <ul>
-<li>the <code>previous</code> multihash must use the <a href="./datatypes.html#multihash-legacy-encoding">legacy message hash encoding</a> as a string</li>
-<li>the <code>author</code> multikey must use the <a href="./datatypes.html#multikey-legacy-encoding">legacy multikey encoding</a> as a string</li>
+<li>the <code>previous</code> multihash must use the <a href="feed/./datatypes.html#multihash-legacy-encoding">legacy message hash encoding</a> as a string</li>
+<li>the <code>author</code> multikey must use the <a href="feed/./datatypes.html#multikey-legacy-encoding">legacy multikey encoding</a> as a string</li>
 <li>the <code>sequence</code> is serialized as a float, since that's the only number type available
 <ul>
 <li>it must not be negative</li>
@@ -713,7 +724,7 @@ TODO insert new format here -->
 <li>the <code>swapped</code> boolean is omitted</li>
 <li>an entry <code>&quot;hash&quot;: &quot;sha256&quot;</code> is added</li>
 <li>if <code>swapped</code>, the order of entries must be <code>previous, sequence, author, timestamp, hash, content, signature</code>, else it must be <code>previous, author, sequence, timestamp, hash, content, signature</code></li>
-<li>if <code>content</code> is a multibox, it must use the <a href="./datatypes.html#multibox-legacy-encoding">legacy multibox encoding</a> as a string</li>
+<li>if <code>content</code> is a multibox, it must use the <a href="feed/./datatypes.html#multibox-legacy-encoding">legacy multibox encoding</a> as a string</li>
 </ul>
 <p>When creating new messages, the (purely logical) value of <code>swapped</code> should be <code>false</code>. Or you might set it to <code>true</code>, or generate it randomly - nobody can stop you, and everything will still work.</p>
 <a class="header" href="#legacy-message" id="legacy-message"><h3>Legacy Message</h3></a>
@@ -721,9 +732,9 @@ TODO insert new format here -->
 <a class="header" href="#computing-a-legacy-messages-signature" id="computing-a-legacy-messages-signature"><h3>Computing a Legacy Message's Signature</h3></a>
 <p>To obtain the signature of a message, first compute the json encoding specified above, but without the <code>&quot;signature&quot;</code> entry. Then compute the signing encoding of the corresponding legacy data value, using the entry order of the json as a tie-breaker for the entry-order of the signing encoding. Finally use the signing primitive of the message's <code>author</code> on the signing encoding, to obtain the signature.</p>
 <a class="header" href="#computing-the-hash-of-a-legacy-message" id="computing-the-hash-of-a-legacy-message"><h3>Computing the Hash of a Legacy Message</h3></a>
-<p>To compute the hash of a legacy message, use the <a href="./datamode.html">legacy value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<p>To compute the hash of a legacy message, use the <a href="feed/./datamode.html">legacy value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
 <a class="header" href="#computing-the-size-of-a-legacy-message" id="computing-the-size-of-a-legacy-message"><h3>Computing the Size of a Legacy Message</h3></a>
-<p>To compute the size of a legacy message, use the <a href="./datamode.html">legacy value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<p>To compute the size of a legacy message, use the <a href="feed/./datamode.html">legacy value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
 <a class="header" href="#legacy-message-validation" id="legacy-message-validation"><h3>Legacy Message Validation</h3></a>
 <p>A legacy message is considered valid if and only if all of the following conditions are met:</p>
 <ul>
@@ -747,17 +758,17 @@ TODO insert new format here -->
 <li>the least significant bit is set to <code>0</code> if <code>content</code> is an object, <code>1</code> otherwise (i.e. when the content is encrypted)</li>
 </ul>
 </li>
-<li>the <a href="./datatypes.html#multikey-compact-encoding">compact encoding</a> of the <code>author</code> multikey</li>
-<li>the <a href="./datatypes.html#varu64-binary-encoding">VarU64 binary encoding</a> of the <code>sequence</code> integer</li>
+<li>the <a href="feed/./datatypes.html#multikey-compact-encoding">compact encoding</a> of the <code>author</code> multikey</li>
+<li>the <a href="feed/./datatypes.html#varu64-binary-encoding">VarU64 binary encoding</a> of the <code>sequence</code> integer</li>
 <li>the binary representation of the <code>timestamp</code> 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zero, infinities and NaNs are invalid)</li>
-<li>if <code>previous</code> is not <code>null</code>, the <a href="./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash, but without the leading VarU64 indicating the hash target</li>
+<li>if <code>previous</code> is not <code>null</code>, the <a href="feed/./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash, but without the leading VarU64 indicating the hash target</li>
 <li>depending on whether the message content is encrypted or not:
 <ul>
-<li>if the message content is not encrypted: the <a href="./datamodel.html#cbor-encoding">legacy cbor encoding</a> of the content</li>
-<li>if the message content is encrypted: the <a href="./datatypes.html#multibox-compact-encoding">compact encoding</a> of the <code>content</code> multibox</li>
+<li>if the message content is not encrypted: the <a href="feed/./datamodel.html#cbor-encoding">legacy cbor encoding</a> of the content</li>
+<li>if the message content is encrypted: the <a href="feed/./datatypes.html#multibox-compact-encoding">compact encoding</a> of the <code>content</code> multibox</li>
 </ul>
 </li>
-<li>a <a href="./datatypes.html#varu64-binary-encoding">VarU64</a> indicating the length of the signature in bytes</li>
+<li>a <a href="feed/./datatypes.html#varu64-binary-encoding">VarU64</a> indicating the length of the signature in bytes</li>
 <li>the raw bytes of the <code>signature</code></li>
 </ul>
 

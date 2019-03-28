@@ -32,7 +32,10 @@
     </head>
     <body class="light">
         <!-- Provide site root to javascript -->
-        <script type="text/javascript">var path_to_root = "";</script>
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = "light";
+        </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script type="text/javascript">
@@ -54,7 +57,7 @@
         <script type="text/javascript">
             var theme;
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
-            if (theme === null || theme === undefined) { theme = 'light'; }
+            if (theme === null || theme === undefined) { theme = default_theme; }
             document.body.className = theme;
             document.querySelector('html').className = theme + ' js';
         </script>
@@ -72,7 +75,7 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li class="affix"><a href="introduction.html">Introduction</a></li><li><a href="datatypes.html"><strong aria-hidden="true">1.</strong> Common Datatypes</a></li><li><a href="datamodel.html"><strong aria-hidden="true">2.</strong> Datamodel</a></li><li><a href="messages.html"><strong aria-hidden="true">3.</strong> Feeds and Messages</a></li></ol>
+            <ol class="chapter"><li class="affix"><a href="introduction.html">Introduction</a></li><li><a href="feed/index.html"><strong aria-hidden="true">1.</strong> Feed</a></li><li><ol class="section"><li><a href="feed/datatypes.html"><strong aria-hidden="true">1.1.</strong> Common Datatypes</a></li><li><a href="feed/datamodel.html"><strong aria-hidden="true">1.2.</strong> Datamodel</a></li><li><a href="feed/messages.html"><strong aria-hidden="true">1.3.</strong> Feeds and Messages</a></li></ol></li></ol>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -89,7 +92,7 @@
                                 <i class="fa fa-paint-brush"></i>
                             </button>
                             <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                                <li role="none"><button role="menuitem" class="theme" id="light">Light <span class="default">(default)</span></button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
                                 <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                                 <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                                 <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -108,6 +111,7 @@
                             <a href="print.html" title="Print this book" aria-label="Print this book">
                                 <i id="print-button" class="fa fa-print"></i>
                             </a>
+                            
                         </div>
                     </div>
                 </div>
@@ -137,6 +141,7 @@
                 <div id="content" class="content">
                     <main>
                         <a class="header" href="#introduction" id="introduction"><h1>Introduction</h1></a>
+<p>TODO (mw) re-write this.</p>
 <p>This document is the specification of the <a href="(https://www.scuttlebutt.nz/)">secure-scuttlebutt</a> protocol (ssb). The primary audience are developers who need a thorough understanding of protocol internals, for example because they want to implement it themselves. The specificaiton is not intended for developers who want to build applications on top of ssb. Ssb provides nice abstractions to those developer, hiding the nitty-gritty details. This spec however is all about those details.</p>
 <p>It is possible to read through the spec from end to end, but it's not an easy read. It is structured into different sections, each dealing with a different aspect of the protocol. The sections begin with a high-level overview of the problem space, and then delve into the details. In the description of those details, the highest importance is given to unambiguity. If you can not tell <em>exactly</em> how something works, it is a bug in the spec.</p>
 <!-- TODO add links to test data and rust reference impl -->
