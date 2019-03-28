@@ -2,6 +2,7 @@
 
 [Introduction](./introduction.md)
 
-- [Common Datatypes](./datatypes.md)
-- [Datamodel](./datamodel.md)
-- [Feeds and Messages](./messages.md)
+- [Feed](./feed/index.md)
+  - [Common Datatypes](./feed/datatypes.md)
+  - [Datamodel](./feed/datamodel.md)
+  - [Feeds and Messages](./feed/messages.md)
