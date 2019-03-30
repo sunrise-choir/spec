@@ -155,34 +155,10 @@
 <p>A few datatypes appear throughout this spec, it makes sense to introduce them in one single place.</p>
 <p>An overarching theme of various parts of the ssb protocol(s) is that of future-proofness. The protocol will need to adapt itself to new circumstances, such as new transport channels or broken cryptographic primitives. A simple way to keep flexibility are self-describing multiformats, where the data is prefixed by an identifier (and in some cases its expected length). New data types can be introduced by simply assigning a new identifier. Older software can detect data types it doesn't understand yet, and react accordingly.</p>
 <p>Each format consists of some logical data type, and then one or more encodings. These encodings can serve different purposes, for example they might be optimized for machine-readability, human-readability, uniqueness, backwards-compatibility, etc.</p>
-<a class="header" href="#varu64" id="varu64"><h2>VarU64</h2></a>
-<p>A VarU64 is an unsigned 64 bit integer (a natural number between 0 and 2^64 - 1 inclusive), to be stored in a variable-length encoding.</p>
-<a class="header" href="#varu64-binary-encoding" id="varu64-binary-encoding"><h3>VarU64 Binary Encoding</h3></a>
-<p>The binary encoding of a VarU64 is easiest defined by giving the decoding process:</p>
-<p>To decode a VarU64, look at the first byte. If its value is below 248, the value itself is the encoded number. Else, the first byte determines the further <code>length</code> of the encoding:</p>
-<table><thead><tr><th> first byte </th><th> number of additional bytes </th></tr></thead><tbody>
-<tr><td> 248 </td><td> 1 </td></tr>
-<tr><td> 249 </td><td> 2 </td></tr>
-<tr><td> 250 </td><td> 3 </td></tr>
-<tr><td> 251 </td><td> 4 </td></tr>
-<tr><td> 252 </td><td> 5 </td></tr>
-<tr><td> 253 </td><td> 6 </td></tr>
-<tr><td> 254 </td><td> 7 </td></tr>
-<tr><td> 255 </td><td> 8 </td></tr>
-</tbody></table>
-<p>Following the first byte are <code>length</code> many bytes. These bytes are the big-endian representation of the encoded number.</p>
-<p>Of all possible representations for a number that this scheme admits, the shortest one is its unique, valid encoding. Decoders must indicate an error if a value uses an encoding that is longer than necessary.</p>
-<p>Further information on the VarU64 format can be found <a href="https://github.com/AljoschaMeyer/varu64-rs">here</a>.</p>
-<a class="header" href="#ctlv" id="ctlv"><h2>CTLV</h2></a>
-<p>A <em>compact type-length-value</em> encoding. A ctlv consists of a <code>type</code> (unsigned 64 bit integer), a <code>length</code> (unsigned 64 bit integer), and a <code>value</code> (a sequence of <code>length</code> many bytes).</p>
-<a class="header" href="#ctlv-binary-encoding" id="ctlv-binary-encoding"><h3>CTLV Binary Encoding</h3></a>
-<p>The binary encodings is the concatenation of an encoding of the type, an encoding of the length (sometimes omitted) and the raw bytes of the value.</p>
-<p>The <code>type</code> is an unsigned 64 bit integer, encoded as a <a href="#varu64-binary-encoding">VarU64</a>. If <code>type</code> is <code>128</code> or more, it is followed by another VarU64 encoding the <code>length</code>. If <code>type</code> is less than <code>128</code>, the value of <code>length</code> is computed as <code>2 ^ (type &gt;&gt; 3)</code>. In both cases, the remainder of the encoding consists of <code>length</code> many bytes of payload (the <code>value</code>).</p>
-<p>Further information on the ctlv format can be found <a href="https://github.com/AljoschaMeyer/ctlv">here</a>.</p>
 <a class="header" href="#multikey" id="multikey"><h2>Multikey</h2></a>
 <p>A multikey is the public key of some <a href="https://en.wikipedia.org/wiki/Digital_signature">digital signature</a> scheme, annotated with an identifier for the scheme itself. The only currently supported cryptographic primitive is <a href="http://ed25519.cr.yp.to/">ed25519</a> (which has a public key length of 32 bytes).</p>
-<a class="header" href="#multikey-legacy-encoding" id="multikey-legacy-encoding"><h3>Multikey Legacy Encoding</h3></a>
-<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multikey is defined as the concatenation of:</p>
+<a class="header" href="#multikey-encoding" id="multikey-encoding"><h3>Multikey Encoding</h3></a>
+<p>The encoding of a multikey is defined as the concatenation of:</p>
 <ul>
 <li>the character <code>@</code> (<code>0x40</code>)</li>
 <li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the key itself
@@ -199,22 +175,10 @@
 </li>
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
-<a class="header" href="#multikey-compact-encoding" id="multikey-compact-encoding"><h3>Multikey Compact Encoding</h3></a>
-<p>The compact encoding of a multikey is a <a href="#ctlv-binary-encoding">binary ctlv encoding</a>, where the <code>value</code> is the raw byte array of the key, and the type is taken from the following table:</p>
-<table><thead><tr><th> Cryptographic Primitive </th><th> Type </th></tr></thead><tbody>
-<tr><td> ed25519                 </td><td> 40   </td></tr>
-</tbody></table>
 <a class="header" href="#multifeed" id="multifeed"><h2>Multifeed</h2></a>
 <p>A multifeed represents a scuttlebutt feed. It consists of a feed kind indicator and some additional data depending on the feed kind. The only currently supported feed kind is <code>multikey</code>, whose additional data surprisingly enough is a multikey.</p>
-<a class="header" href="#multifeed-legacy-encoding" id="multifeed-legacy-encoding"><h3>Multifeed Legacy Encoding</h3></a>
-<p>The legacy encoding of a multikey multifeed is the same as the legacy encoding of the multikey. The legacy encoding of possible future multifeed kinds will use a different first char than <code>@</code>.</p>
-<a class="header" href="#multifeed-compact-encoding" id="multifeed-compact-encoding"><h3>Multifeed Compact Encoding</h3></a>
-<p>The compact encoding of a multihash is a <a href="#varu64-binary-encoding">VarU64</a> indicating the feed kind, followed by a <a href="#ctlv-binary-encoding">binary ctlv encoding</a> for the kind-specific data.</p>
-<p>The VarU64 for the feed kind is taken from the following table:</p>
-<table><thead><tr><th> Feed Kind </th><th> Int </th></tr></thead><tbody>
-<tr><td> multikey  </td><td> 0   </td></tr>
-</tbody></table>
-<p>For the <code>multikey</code> feed kind, the kind-specific data is simply the compact encoding of the multikey.</p>
+<a class="header" href="#multifeed-encoding" id="multifeed-encoding"><h3>Multifeed Encoding</h3></a>
+<p>The encoding of a multikey multifeed is the same as the encoding of the multikey. The encoding of possible future multifeed kinds will use a different first char than <code>@</code>.</p>
 <a class="header" href="#multihash" id="multihash"><h2>Multihash</h2></a>
 <p>A multihash is a pair of:</p>
 <ul>
@@ -223,8 +187,8 @@
 </ul>
 <p>The only currently supported hash targets are <code>Message</code> and <code>Blob</code></p>
 <p>The only currently supported cryptographic primitive is <a href="https://en.wikipedia.org/wiki/SHA-2">sha256</a> (which has a digest length of 32 bytes).</p>
-<a class="header" href="#multihash-legacy-encoding" id="multihash-legacy-encoding"><h3>Multihash Legacy Encoding</h3></a>
-<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multihash is defined as the concatenation of:</p>
+<a class="header" href="#multihash-encoding" id="multihash-encoding"><h3>Multihash Encoding</h3></a>
+<p>The encoding of a multihash is defined as the concatenation of:</p>
 <ul>
 <li>depending on the hash target:
 <ul>
@@ -246,21 +210,11 @@
 </li>
 </ul>
 <p>Typically, this encoding is stored in a json string.</p>
-<a class="header" href="#multihash-compact-encoding" id="multihash-compact-encoding"><h3>Multihash Compact Encoding</h3></a>
-<p>The compact encoding of a multihash is a <a href="#varu64-binary-encoding">VarU64</a> indicating the hash target, followed by a <a href="#ctlv-binary-encoding">binary ctlv encoding</a> for the digest, where the <code>value</code> is the raw byte array of the hash, and the type is taken from the following table:</p>
-<table><thead><tr><th> Cryptographic Primitive </th><th> Type </th></tr></thead><tbody>
-<tr><td> sha256                  </td><td> 40   </td></tr>
-</tbody></table>
-<p>The VarU64 for the hash target is taken from the following table:</p>
-<table><thead><tr><th> Hash Target </th><th> Int </th></tr></thead><tbody>
-<tr><td> Message     </td><td> 0   </td></tr>
-<tr><td> Blob        </td><td> 1   </td></tr>
-</tbody></table>
 <a class="header" href="#multibox" id="multibox"><h2>Multibox</h2></a>
 <p>A multibox is a cyphertext, annotated with an identifier for the algorithm that produced it. The algorithm identifiers are natural numbers between 0 and 2^64 - 1 (inclusive). Even identifiers are reserved for assignment by the ssb protocol devs, odd identifiers are open for experimentation and/or custom usage.</p>
 <p>The only currently specified algorithm is <a href="https://ssbc.github.io/scuttlebutt-protocol-guide/#private-messages">private-box</a>, using the identifier 0.</p>
-<a class="header" href="#multibox-legacy-encoding" id="multibox-legacy-encoding"><h3>Multibox Legacy Encoding</h3></a>
-<p>The legacy encoding is necessary to keep backwards-compatibility with old ssb data. The encoding of a multibox is defined as the concatenation of:</p>
+<a class="header" href="#multibox-encoding" id="multibox-encoding"><h3>Multibox Encoding</h3></a>
+<p>The encoding of a multibox is defined as the concatenation of:</p>
 <ul>
 <li>the <a href="https://tools.ietf.org/html/rfc4648#section-3.5">canonic</a> base64 encoding of the cyphertext
 <ul>
@@ -307,132 +261,31 @@
 </tbody></table>
 <p>Due to omitting leading zeros, the suffix for private box (identifier 0) is simply <code>&quot;box&quot;</code>.</p>
 <p>For large identifiers (between 2^60 and 2^64 - 1 inclusive), 13 characters are needed, and the most-significant bit of the leftmost character does not contribute to the decoded value. Identifiers must be encoded such that this ignored bit is set to zero. Put another way: If the identifier encoding takes up 13 characters, it must begin with one of <code>(1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F)</code>.</p>
-<a class="header" href="#multibox-compact-encoding" id="multibox-compact-encoding"><h3>Multibox Compact Encoding</h3></a>
-<p>The compact encoding of a multibox is the <a href="#varu64-binary-encoding">VarU64</a> binary encoding of the algorithm identifier, followed by a <a href="#varu64-binary-encoding">VarU64</a> indicating the remaining length, followed by that many bytes of data.</p>
-<p>For private box, the remaining data is simply the cyphertext (<em>not</em> base64 encoded).</p>
 <a class="header" href="#datamodel" id="datamodel"><h1>Datamodel</h1></a>
 <p>Ssb accepts schemaless data, adhering to a certain format specified in this section. This is the data that application developers care about. Internally, ssb then adds some more metadata to maintain the append-only logs, discussed in the <a href="./messages">next chapter</a>. This chapter only describes the data model of the schemaless content data.</p>
 <p>It is important to clearly distinguish between the abstract data model of a format, and various encodings. For example, the strings <code>1</code>, <code>1.0</code> and <code>0.1e1</code> are all different <a href="http://json.org/">json</a> encodings of the same abstract value. And there can even be different encoding formats for the same abstract value, e.g. the bytes <code>0xf93c00</code> also encode the floating point number 1.0, but in <a href="https://tools.ietf.org/html/rfc7049">cbor</a> rather than json.</p>
 <p>Ssb messages all use the same abstract data model, but there are different situations where they use different encodings. An encoding used for signing the data has different requirements than an encoding used for transmitting the data, which again has different requirements than an encoding used for persisten storage.</p>
 <p>Encodings for persistent storage are not specified in this document, but is crucial for all ssb implementations to compute the exact same signatures, and to send data in a format that can be understood by other implementations. We call these encodings <em>signing encoding</em> and <em>transport encoding</em> respectively.</p>
-<p>The ssb protocol was initially implemented in javascript, and it relied heavily on implicit behavior of the <a href="https://nodejs.org/en/">node js</a> runtime. It has since switched to a more carefully designed message format, but the old fomat still needs to be supported to keep backwards-compatibility.</p>
-<a class="header" href="#hsdt-data" id="hsdt-data"><h2>HSDT Data</h2></a>
-<p>This section describes the new ssb message format. It is a superset of the json-based legacy data format.</p>
+<p>The ssb protocol was initially implemented in javascript, and it relied heavily on implicit behavior of the <a href="https://nodejs.org/en/">node js</a> runtime. People (including the authors of this specification) have called the message format &quot;bizarre&quot; and worse, and that is entirely justified. But when during reading you inevitably thing &quot;How could anybody end up with this, I could have done a much better job.&quot;, then remember: Maybe you could have, but you didn't.</p>
 <a class="header" href="#abstract-data-model" id="abstract-data-model"><h3>Abstract Data Model</h3></a>
-<p>The hsdt data model is based upon cbor. Some features were omitted to ensure canonicity, others were added for ssb-specific use cases.</p>
-<a class="header" href="#null" id="null"><h6>Null</h6></a>
-<p><code>null</code> is an hsdt value that carries <a href="https://en.wikipedia.org/wiki/Unit_type">no information</a>.</p>
-<a class="header" href="#booleans" id="booleans"><h6>Booleans</h6></a>
-<p><code>true</code> and <code>false</code> are hsdt values, called <em>booleans</em>.</p>
-<a class="header" href="#integers" id="integers"><h6>Integers</h6></a>
-<p>Hsdt allows signed and unsigned fixed-width integers of the sizes 8, 16, 32 and 64 bytes. They are referred to as <code>i8</code>, <code>i16</code>, <code>i32</code> and <code>i64</code> (signed) and <code>u8</code>, <code>u16</code>, <code>u32</code> and <code>u64</code> (unsigned).</p>
-<a class="header" href="#floating-point-numbers" id="floating-point-numbers"><h6>Floating Point Numbers</h6></a>
-<p>Hsdt allows the 32 bit and 64 bit floating point numbers from the <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> standard. They are referred to as <code>f32</code> and <code>f64</code>.</p>
-<p>The only difference to IEEE 754: There is just a single value to represent <code>NaN</code> per float type, not multiple ones.</p>
-<a class="header" href="#multifeeds" id="multifeeds"><h6>Multifeeds</h6></a>
-<p>A <a href="feed/../datatypes.html#multifeed">multifeed</a> is an hsdt value.</p>
-<a class="header" href="#multihash-1" id="multihash-1"><h6>Multihash</h6></a>
-<p>A <a href="feed/../datatypes.html#multihash">multihash</a> is an hsdt value.</p>
-<a class="header" href="#byte-strings" id="byte-strings"><h6>Byte Strings</h6></a>
-<p>An ordered sequence of bytes of length between <code>0</code> and <code>2^64 - 1</code> (inclusive) is an hsdt value, called a <em>byte string</em>. Such a byte string may include null bytes.</p>
-<a class="header" href="#utf-8-strings" id="utf-8-strings"><h6>UTF-8 Strings</h6></a>
-<p>An ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a> of length between <code>0</code> and <code>2^64 - 1</code> (inclusive) is an hsdt value, called a <em>utf-8 string</em>. Such a utf-8 string may include null bytes.</p>
-<a class="header" href="#arrays" id="arrays"><h6>Arrays</h6></a>
-<p>Let <code>n</code> be a natural number less than <code>2^64</code>, and let <code>v_0, ..., v_n</code> be hsdt values.</p>
-<p>The ordered sequence <code>[v_0, ..., v_n]</code> is an hsdt value, called an <em>array</em>.</p>
-<a class="header" href="#sets" id="sets"><h6>Sets</h6></a>
-<p>Let <code>n</code> be a natural number less than <code>2^64</code>, and let <code>v_0, ..., v_n</code> be hsdt values.</p>
-<p>The (unordered) set <code>#{v_0, ..., v_n}</code> is an hsdt value, called a <em>set</em>.</p>
-<a class="header" href="#maps" id="maps"><h6>Maps</h6></a>
-<p>Let <code>n</code> be a natural number less than <code>2^64</code>, let <code>k_0, ..., k_n</code> be pairwise distinct hsdt values, and let <code>v_0, ..., v_n</code> be arbitrary hsdt values.</p>
-<p>The (unordered) set of pairs <code>(k_i, v_i)</code> for all <code>0 &lt;= i &lt;= n</code> is an hsdt value, called a <em>map</em>. The pairs are called <em>entries</em>, the first entries of the pairs are called <em>keys</em>, and the second entries of the pairs are called <em>values</em>.</p>
-<a class="header" href="#default-encoding" id="default-encoding"><h3>Default Encoding</h3></a>
-<p>This encoding of hsdt values is based on a canonical subset of cbor, extended to express the non-cbor values (sets, multifeeds, multihashes). It is used for both message signing and the exchange of messages between processes.</p>
-<p>The default encoding is defined as follows:</p>
-<a class="header" href="#encoding-null" id="encoding-null"><h6>Encoding Null</h6></a>
-<p><em>This is identical to cbor.</em>
-<code>null</code> is encoded as the byte <code>0b111_10110</code> (<code>0xf6</code>).</p>
-<a class="header" href="#encoding-booleans" id="encoding-booleans"><h6>Encoding Booleans</h6></a>
-<p><em>This is identical to cbor.</em>
-<code>true</code> is encoded as the byte <code>0b111_10101</code> (<code>0xf5</code>).
-<code>false</code> is encoded as the byte <code>0b111_10100</code> (<code>0xf4</code>).</p>
-<a class="header" href="#encoding-integers" id="encoding-integers"><h6>Encoding Integers</h6></a>
-<p>Integers are encoded with a tag byte indicating size and signedness, followed by the big-endian representation of the integer, using <a href="https://en.wikipedia.org/wiki/Two&#x27;s_complement">two's complement</a> for signed integers. Note that this slightly differs from how cbor handles integers.</p>
-<p>The tag byte is taken from the following table:</p>
-<table><thead><tr><th> Integer Type </th><th> Tag Binary  </th><th> Tag Hex </th></tr></thead><tbody>
-<tr><td> u8           </td><td> 0b000_11000 </td><td> 0x18    </td></tr>
-<tr><td> u16          </td><td> 0b000_11001 </td><td> 0x19    </td></tr>
-<tr><td> u32          </td><td> 0b000_11010 </td><td> 0x1a    </td></tr>
-<tr><td> u64          </td><td> 0b000_11011 </td><td> 0x1b    </td></tr>
-<tr><td> i8           </td><td> 0b001_11000 </td><td> 0x38    </td></tr>
-<tr><td> i16          </td><td> 0b001_11001 </td><td> 0x39    </td></tr>
-<tr><td> i32          </td><td> 0b001_11010 </td><td> 0x3a    </td></tr>
-<tr><td> i64          </td><td> 0b001_11011 </td><td> 0x3b    </td></tr>
-</tbody></table>
-<a class="header" href="#encoding-floating-point-numbers" id="encoding-floating-point-numbers"><h6>Encoding Floating Point Numbers</h6></a>
-<p><em>This is <strong>nearly</strong> identical to cbor.</em></p>
-<p>A 32 bit floating point number is encoded as the byte <code>0b111_11010</code> (<code>0xfa</code>), followed by the four bytes of the number (sign, exponent, fraction in that order). <code>NaN</code> is encoded as <code>0xffffffffff</code>.</p>
-<p>A 64 bit floating point number is encoded as the byte <code>0b111_11011</code> (<code>0xfb</code>), followed by the eight bytes of the number (sign, exponent, fraction in that order). <code>NaN</code> is encoded as <code>0xffffffffffffffffff</code>.</p>
-<a class="header" href="#encoding-multifeeds" id="encoding-multifeeds"><h6>Encoding Multifeeds</h6></a>
-<p>A multifeed is encoded as the byte <code>0b111_11100</code> (<code>0xfc</code>), followed by the <a href="feed/../datatypes.html#multifeed-compact-encoding">compact encoding</a> of the multifeed.</p>
-<a class="header" href="#encoding-multihashes" id="encoding-multihashes"><h6>Encoding Multihashes</h6></a>
-<p>A multihash is encoded as the byte <code>0b111_11101</code> (<code>0xfd</code>), followed by the <a href="feed/../datatypes.html#multihash-compact-encoding">compact encoding</a> of the multihash.</p>
-<a class="header" href="#encoding-byte-strings" id="encoding-byte-strings"><h6>Encoding Byte Strings</h6></a>
-<p>Byte strings are encoded as in cbor, with the following restrictions:</p>
-<ul>
-<li>no indefinite length byte strings (additional type <code>31</code> is not allowed)</li>
-<li>byte strings must use the shortest possible encoding of their length</li>
-</ul>
-<a class="header" href="#encoding-utf-8-strings" id="encoding-utf-8-strings"><h6>Encoding Utf-8 Strings</h6></a>
-<p>Utf-8 strings are encoded as in cbor (called &quot;text strings&quot; there), with the following restrictions:</p>
-<ul>
-<li>no indefinite length utf-8 strings (additional type <code>31</code> is not allowed)</li>
-<li>utf-8 strings must use the shortest possible encoding of their length</li>
-</ul>
-<a class="header" href="#encoding-arrays" id="encoding-arrays"><h6>Encoding Arrays</h6></a>
-<p>Arrays are encoded as in cbor, with the following restrictions:</p>
-<ul>
-<li>no indefinite length arrays strings (additional type <code>31</code> is not allowed)</li>
-<li>array must use the shortest possible encoding of their length</li>
-</ul>
-<a class="header" href="#encoding-sets" id="encoding-sets"><h6>Encoding Sets</h6></a>
-<p>Sets are encoded just like arrays, except the second-most-significant bit of the first byte is <code>1</code> rather than <code>0</code> (e.g. the empty set is <code>0b110_00000</code> or <code>0xc0</code>).</p>
-<p>The entries of the set must be sorted lexicographically by their encoding. When decoding, encountering an entry that is not lexicographically greated than its predecessor must be treated as an error. Note that this also disallows duplicate entries.</p>
-<a class="header" href="#encoding-maps" id="encoding-maps"><h6>Encoding Maps</h6></a>
-<p>Maps are encoded as in cbor, with the following restrictions:</p>
-<ul>
-<li>no indefinite length arrays strings (additional type <code>31</code> is not allowed)</li>
-<li>maps must use the shortest possible encoding of their length</li>
-</ul>
-<p>The keys of the map must be sorted lexicographically by their encoding. When decoding, encountering a key that is not lexicographically greated than its predecessor must be treated as an error. Note that this also disallows duplicate keys.</p>
-<a class="header" href="#non-canonic-encoding" id="non-canonic-encoding"><h3>Non-Canonic Encoding</h3></a>
-<p>The non-canonic hsdt encoding lifts the restriction that sets entries and map keys must be sorted lexicographically. Note that:</p>
-<ul>
-<li>duplicate set entries or map keys are still disallowed</li>
-<li>no other restrictions are lifted (in particular, length indicators for strings/collections must still be as small as possible)</li>
-</ul>
-<a class="header" href="#legacy-data" id="legacy-data"><h2>Legacy Data</h2></a>
-<p>This section describes the message format that was originally used by ssb. The protocol has since moved on, everything here should be considered deprecated. But for backwards compatibility, ssb servers still need to understand, verify and relay old messages.</p>
-<p>Legacy messages have been deprecated because their design emerged organically through reliance on the default behavior of certain features of <a href="https://nodejs.org/en/">node js</a>. People (including the authors of this specification) have called the legacy message format &quot;bizarre&quot; and worse, and that is entirely justified. But when during reading you inevitably thing &quot;How could anybody end up with this, I could have done a much better job.&quot;, then remember: Maybe you could have, but you didn't.</p>
-<a class="header" href="#abstract-data-model-1" id="abstract-data-model-1"><h3>Abstract Data Model</h3></a>
-<p>The legacy data model describes all of the free-form data that can be carried in a legacy message. It is close to the <a href="http://json.org/">json</a> data model, but with a few differences. The definition came about as the set of javascript values created by <code>JSON.parse(json)</code> for which <a href="%EyGGCcjAbaShKFCMxXKYiZjQe17SR298D0SLTuKmZpo=.sha256"><code>json === JSON.stringify(JSON.parse(json))</code></a> (javascript code).</p>
+<p>The data model describes all of the free-form data that can be carried in a message. It is close to the <a href="http://json.org/">json</a> data model, but with a few differences. The definition came about as the set of javascript values created by <code>JSON.parse(json)</code> for which <a href="%EyGGCcjAbaShKFCMxXKYiZjQe17SR298D0SLTuKmZpo=.sha256"><code>json === JSON.stringify(JSON.parse(json))</code></a> (javascript code).</p>
 <p>Defined in a language-agnostic way:</p>
-<a class="header" href="#null-1" id="null-1"><h6>Null</h6></a>
-<p><code>null</code> is a legacy value that carries <a href="https://en.wikipedia.org/wiki/Unit_type">no information</a>.</p>
-<a class="header" href="#booleans-1" id="booleans-1"><h6>Booleans</h6></a>
-<p><code>true</code> and <code>false</code> are legacy values, called <em>booleans</em>.</p>
+<a class="header" href="#null" id="null"><h6>Null</h6></a>
+<p><code>null</code> is a value that carries <a href="https://en.wikipedia.org/wiki/Unit_type">no information</a>.</p>
+<a class="header" href="#booleans" id="booleans"><h6>Booleans</h6></a>
+<p><code>true</code> and <code>false</code> are values, called <em>booleans</em>.</p>
 <a class="header" href="#strings" id="strings"><h6>Strings</h6></a>
-<p>An ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a> of length between <code>0</code> and <code>2^53 - 1</code> (inclusive) is a legacy value, called a <em>string</em>. Such a string may include null bytes.</p>
+<p>An ordered sequence of bytes which form valid <a href="https://en.wikipedia.org/wiki/UTF-8">utf8</a> of length between <code>0</code> and <code>2^53 - 1</code> (inclusive) is a value, called a <em>string</em>. Such a string may include null bytes.</p>
 <a class="header" href="#floats" id="floats"><h6>Floats</h6></a>
-<p>An <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> double precision (64 bit) floating point number that is none of <code>Infinity</code>, <code>-Infinity</code>, <code>-0</code> or <code>NaN</code> is a legacy value, called a <em>float</em>.</p>
-<a class="header" href="#arrays-1" id="arrays-1"><h6>Arrays</h6></a>
-<p>Let <code>n</code> be a natural number less than <code>2^32</code>, and let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>.</p>
-<p>The ordered sequence <code>[v_0, ..., v_n]</code> is a legacy value, called an <em>array</em>.</p>
+<p>An <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754</a> double precision (64 bit) floating point number that is none of <code>Infinity</code>, <code>-Infinity</code>, <code>-0</code> or <code>NaN</code> is a value, called a <em>float</em>.</p>
+<a class="header" href="#arrays" id="arrays"><h6>Arrays</h6></a>
+<p>Let <code>n</code> be a natural number less than <code>2^32</code>, and let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">values</a>.</p>
+<p>The ordered sequence <code>[v_0, ..., v_n]</code> is a value, called an <em>array</em>.</p>
 <a class="header" href="#objects" id="objects"><h6>Objects</h6></a>
-<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>s_0, ..., s_n</code> be pairwise distinct <a href="#strings">strings</a>, and let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>.</p>
-<p>The (unordered) set of pairs <code>(s_i, v_i)</code> for all <code>0 &lt;= i &lt;= n</code> is a legacy value, called a <em>object</em>. The pairs are called <em>entries</em>, the strings are called <em>keys</em>, and the legacy values are called <em>values</em>.</p>
+<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>s_0, ..., s_n</code> be pairwise distinct <a href="#strings">strings</a>, and let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">values</a>.</p>
+<p>The (unordered) set of pairs <code>(s_i, v_i)</code> for all <code>0 &lt;= i &lt;= n</code> is a value, called a <em>object</em>. The pairs are called <em>entries</em>, the strings are called <em>keys</em>, and the values are called <em>values</em>.</p>
 <a class="header" href="#signing-encoding" id="signing-encoding"><h3>Signing Encoding</h3></a>
-<p>The encoding to turn legacy values into a signeable array of bytes is based on json (the set of valid encodings is a subset of <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the freely-orderable object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.</p>
+<p>The encoding to turn values into a signeable array of bytes is based on json (the set of valid encodings is a subset of <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>). There are multiple valid encodings of a single value, because some of the entries of an objects can be encoded in an arbitary order. But up to object entry order, the encoding is unique. When receiving a message over the network, the order of the freely-orderable object entries in the transport encoding is the order that must be used for verifying the signature. Thus the network encoding induces a unique signing encoding to use for signature checking.</p>
 <p>The signing encoding is defined as follows:</p>
 <a class="header" href="#signing-encoding-null" id="signing-encoding-null"><h6>Signing Encoding Null</h6></a>
 <p><code>null</code> is encoded as the utf-8 string <code>null</code> (<code>[0x6E, 0x75, 0x6C, 0x6C]</code>).</p>
@@ -486,7 +339,7 @@
 <li>good to know: The maximum length for such an encoding is 25 bytes</li>
 </ul>
 <a class="header" href="#signing-encoding-arrays" id="signing-encoding-arrays"><h6>Signing Encoding Arrays</h6></a>
-<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>, and let <code>e_0, ..., e_n</code> be functions that take a natural number as an argument and return the <a href="#signing-encoding">encodings</a> of <code>v_0, ..., v_n</code> respectively using the supplied number as the indentation level.</p>
+<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">values</a>, and let <code>e_0, ..., e_n</code> be functions that take a natural number as an argument and return the <a href="#signing-encoding">encodings</a> of <code>v_0, ..., v_n</code> respectively using the supplied number as the indentation level.</p>
 <p>At indentation level <code>indent</code>, the array <code>[v_0, ..., v_n]</code> is encoded as follows:</p>
 <ul>
 <li>if the array is empty (<code>n == 0</code>), the encoding is the utf-8 string <code>[]</code> (<code>[0x5B, 0x5D]</code>)</li>
@@ -509,7 +362,7 @@
 </li>
 </ul>
 <a class="header" href="#signing-encoding-objects" id="signing-encoding-objects"><h6>Signing Encoding Objects</h6></a>
-<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>s_0, ..., s_n</code> be pairwise distinct <a href="#strings">strings</a>, let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">legacy values</a>, and let <code>e_0, ..., e_n</code> be functions that take a natural number as an argument and return the <a href="#signing-encoding">encodings</a> of <code>v_0, ..., v_n</code> respectively using the supplied number as the indentation level.</p>
+<p>Let <code>n</code> be a natural number less than <code>2^32</code>, let <code>s_0, ..., s_n</code> be pairwise distinct <a href="#strings">strings</a>, let <code>v_0, ..., v_n</code> be <a href="#abstract-data-model">values</a>, and let <code>e_0, ..., e_n</code> be functions that take a natural number as an argument and return the <a href="#signing-encoding">encodings</a> of <code>v_0, ..., v_n</code> respectively using the supplied number as the indentation level.</p>
 <p>At indentation level <code>indent</code>, the object <code>{ s_0: v_0, ..., s_n: v_n}</code> is encoded as follows:</p>
 <ul>
 <li>if the object is empty (<code>n == 0</code>), the encoding is the utf-8 string <code>{}</code> (<code>[0x7B, 0x7D]</code>)</li>
@@ -577,14 +430,14 @@
 <li><a href="https://dl.acm.org/citation.cfm?id=3192369">Adams, Ulf. &quot;Ryū: fast float-to-string conversion.&quot; Proceedings of the 39th ACM SIGPLAN Conference on Programming Language Design and Implementation. ACM, 2018.</a></li>
 </ul>
 <p>The array and object handling is equivalent to <code>JSON.stringify(value, null, 2)</code>, specified in <a href="https://www.ecma-international.org/ecma-262/6.0/#sec-json.stringify">ECMAScript 2015</a> (except for the object entry ordering, which is not specified in ECMAScript, but implemented this way in v8 and spidermonkey).</p>
-<a class="header" href="#legacy-hash-computation" id="legacy-hash-computation"><h3>Legacy Hash Computation</h3></a>
-<p>To compute the hash of a legacy value, you can not use the signing encoding directly, but the hash computation is based on it. The signing encoding always results in valid unicode. Represent this unicode in <a href="https://en.wikipedia.org/wiki/UTF-16">utf-16</a>. This encoding is a sequence of code units, each consisting of two bytes. The data to hash is obtained from these code units by only keeping the less significant byte.</p>
+<a class="header" href="#hash-computation" id="hash-computation"><h3>Hash Computation</h3></a>
+<p>To compute the hash of a value, you can not use the signing encoding directly, but the hash computation is based on it. The signing encoding always results in valid unicode. Represent this unicode in <a href="https://en.wikipedia.org/wiki/UTF-16">utf-16</a>. This encoding is a sequence of code units, each consisting of two bytes. The data to hash is obtained from these code units by only keeping the less significant byte.</p>
 <p>Example: Suppose you want to compute the hash for <code>&quot;ß&quot;</code>, the corresponding utf8 is <code>[0x22, 0xC3, 0x9F, 0x22]</code>. In big-endian utf16, this is <code>[(0x22, 0x00), (0xDF, 0x00), (0x22, 0x00)]</code>, in little-endian utf16, this is <code>[(0x00, 0x22), (0x00, 0xDF), (0x00, 0x22)]</code>. In both cases, the sequence of less signifiant bytes per code unit is <code>[0x22, 0xDF, 0x22]</code>. That is the byte array over which to compute the hash.</p>
 <p>Note that this means that two strings with different utf-8 encodings can result in the same hash, due to the information in the more significant byte of the utf-16 encoding being dropped.</p>
-<a class="header" href="#legacy-length-computation" id="legacy-length-computation"><h3>Legacy Length Computation</h3></a>
-<p>Ssb places a limit on the size of legacy messages. To compute the length of a legacy value, compute the signing encoding (which is always valid unicode), reencode that unicode as utf16, then count the number of code units.</p>
+<a class="header" href="#length-computation" id="length-computation"><h3>Length Computation</h3></a>
+<p>Ssb places a limit on the size of messages. To compute the length of a value, compute the signing encoding (which is always valid unicode), reencode that unicode as utf16, then count the number of code units.</p>
 <a class="header" href="#json-transport-encoding" id="json-transport-encoding"><h3>JSON Transport Encoding</h3></a>
-<p>In addition to the signing format, legacy messages can be encoded as <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>, with the following differences:</p>
+<p>In addition to the signing format, messages can be encoded as <a href="https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf">ECMA-404 json</a>, with the following differences:</p>
 <ul>
 <li>numbers may not be negative zero</li>
 <li>numbers may not round to positive infinity, negative infinity or negative zero IEEE 754 64 bit floating point numbers</li>
@@ -594,59 +447,7 @@
 <li>in strings, unicode escape sequences of code points greater than <code>U+FFFF</code> must be interpreted as a single code point, not as an explicit surrogate pair</li>
 <li>escape sequences of surrogate code points must be matched: Each escape sequence for a high surrogate must be followed by an escape sequence for a low surrogate, and any escape sequence for a low surrogate must be preceded by an escape sequence for a high surrogate</li>
 </ul>
-<p>The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form has been used by the first ssb server implementations for message exchange with other servers.</p>
-<a class="header" href="#cbor-encoding" id="cbor-encoding"><h3>CBOR Encoding</h3></a>
-<p>A much more compact encoding for use in inter-server communication is based on <a href="https://tools.ietf.org/html/rfc7049">CBOR (ietf rfc 7049)</a>, with the following differences:</p>
-<ul>
-<li>
-<p>The only allowed major types are:</p>
-<ul>
-<li><code>3</code> (text string)</li>
-<li><code>4</code> (array)</li>
-<li><code>5</code> (map)</li>
-<li><code>7</code> (primitives)</li>
-</ul>
-</li>
-<li>
-<p>no indefinite length strings, arrays or maps (additional type <code>31</code> is not allowed)</p>
-</li>
-<li>
-<p>strings, arrays, maps must use the shortest possible encoding of their length</p>
-</li>
-<li>
-<p>the key data items in a map must be text strings (have major type <code>3</code>)</p>
-</li>
-<li>
-<p>primitives are restricted to the following additional types:</p>
-<ul>
-<li><code>20</code> (<code>false</code>)</li>
-<li><code>21</code> (<code>true</code>)</li>
-<li><code>22</code> (<code>null</code>)</li>
-<li><code>27</code> (64-bit floats)</li>
-</ul>
-</li>
-<li>
-<p><code>null</code> is encoded as cbor <code>null</code> (<code>0xF6</code>)</p>
-</li>
-<li>
-<p><code>true</code> is encoded as cbor <code>true</code> (<code>0xF5</code>)</p>
-</li>
-<li>
-<p><code>false</code> is encoded as cbor <code>false</code> (<code>0xF4</code>)</p>
-</li>
-<li>
-<p>strings are encoded as cbor strings (major type 3)</p>
-</li>
-<li>
-<p>floats are encoded as cbor 64 bit floats (<code>0xFB</code>) followed by the eight bytes of the IEEE 754 float (sign, exponent, fraction in that order)</p>
-</li>
-<li>
-<p>arrays are encoded as cbor arrays (major type 4)</p>
-</li>
-<li>
-<p>objects are encoded as cbor maps (major type 7), only using strings as keys</p>
-</li>
-</ul>
+<p>The signing format itself is a subset of this, but this format can be more compact (by omitting all whitespace). This compact form is used by ssb server implementations for message exchange with other servers.</p>
 <a class="header" href="#feeds-and-messages" id="feeds-and-messages"><h1>Feeds and Messages</h1></a>
 <p>Ssb is designed around a data model optimized for simple data replication and strong cryptographic integrity guarantees in a social setting. The central entities in this model are <em>feeds</em> and <em>messages</em>. Messages are the pieces of data inserted into the system, feeds describe <em>who</em> authored a piece of data.</p>
 <p>Messages are carry schemaless, free-form <a href="./datamodel">pieces of data</a>, together with some metadata necessary for message replication and verification. Each message belongs to exactly one feed, and each message contains a backlink to the previous message posted to that feed. Feeds thus form linked lists. Links are implemented via <a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function">cryptographically secure hashes</a>, in that sense feeds behave mostly like blockchains. But whereas blockchains are traditionally used to create a global, single source of truth, ssb chooses a different approach.</p>
@@ -672,17 +473,15 @@
 <li>the free-form content of the message</li>
 <li>a signature to prove that the author knew the private key of the feed</li>
 </ul>
-<p>The actual metadata formats also need to include some extra information. Just like the content data, there is both a legacy and a modern metadata format, with the legacy format being supported for bakwards-compatibility.</p>
-<!-- #### HSDT Metadata
-TODO insert new format here -->
-<a class="header" href="#legacy-metadata" id="legacy-metadata"><h2>Legacy Metadata</h2></a>
-<p>The abstract model for legacy metadata is a tuple containing the following entries:</p>
+<p>The actual metadata formats also need to include some extra information.</p>
+<a class="header" href="#metadata" id="metadata"><h2>Metadata</h2></a>
+<p>The abstract model for metadata is a tuple containing the following entries:</p>
 <ul>
 <li><code>previous</code>: either a <a href="feed/./datatypes.html#multihash">multihash</a>, or the distinct value <code>null</code></li>
 <li><code>author</code>: a <a href="feed/./datatypes.html#multikey">multikey</a></li>
 <li><code>sequence</code>: an unsigned 53 bit integer</li>
 <li><code>timestamp</code>: an IEEE 754 64 bit float except the infinities, negative zero, and <code>NaN</code>s</li>
-<li><code>content</code>: a <a href="feed/./datamodel.html#abstract-data-model">legacy data value</a> that is either:
+<li><code>content</code>: a <a href="feed/./datamodel.html#abstract-data-model">data value</a> that is either:
 <ul>
 <li>an object containing an entry <code>&quot;type&quot;</code>, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16</li>
 <li>a <a href="feed/./datatypes.html#multibox">multibox</a></li>
@@ -695,11 +494,11 @@ TODO insert new format here -->
 </ul>
 </li>
 </ul>
-<a class="header" href="#legacy-json-encoding" id="legacy-json-encoding"><h3>Legacy Json Encoding</h3></a>
-<p>Legacy metadata can be encoded as json, just like regular legacy data. The json encoding is a json object containing the entries listed above, with the following additional regulations:</p>
+<a class="header" href="#json-encoding" id="json-encoding"><h3>Json Encoding</h3></a>
+<p>Metadata can be encoded as json, just like regular data. The json encoding is a json object containing the entries listed above, with the following additional regulations:</p>
 <ul>
-<li>the <code>previous</code> multihash must use the <a href="feed/./datatypes.html#multihash-legacy-encoding">legacy message hash encoding</a> as a string</li>
-<li>the <code>author</code> multikey must use the <a href="feed/./datatypes.html#multikey-legacy-encoding">legacy multikey encoding</a> as a string</li>
+<li>the <code>previous</code> multihash must use the <a href="feed/./datatypes.html#multihash-encoding">message hash encoding</a> as a string</li>
+<li>the <code>author</code> multikey must use the <a href="feed/./datatypes.html#multikey-encoding">multikey encoding</a> as a string</li>
 <li>the <code>sequence</code> is serialized as a float, since that's the only number type available
 <ul>
 <li>it must not be negative</li>
@@ -724,52 +523,27 @@ TODO insert new format here -->
 <li>the <code>swapped</code> boolean is omitted</li>
 <li>an entry <code>&quot;hash&quot;: &quot;sha256&quot;</code> is added</li>
 <li>if <code>swapped</code>, the order of entries must be <code>previous, sequence, author, timestamp, hash, content, signature</code>, else it must be <code>previous, author, sequence, timestamp, hash, content, signature</code></li>
-<li>if <code>content</code> is a multibox, it must use the <a href="feed/./datatypes.html#multibox-legacy-encoding">legacy multibox encoding</a> as a string</li>
+<li>if <code>content</code> is a multibox, it must use the <a href="feed/./datatypes.html#multibox-encoding">multibox encoding</a> as a string</li>
 </ul>
 <p>When creating new messages, the (purely logical) value of <code>swapped</code> should be <code>false</code>. Or you might set it to <code>true</code>, or generate it randomly - nobody can stop you, and everything will still work.</p>
-<a class="header" href="#legacy-message" id="legacy-message"><h3>Legacy Message</h3></a>
-<p>To this json encoding corresponds exactly one legacy data value with a fixed order of object entries. This value is referred to as a <em>legacy message</em>.</p>
-<a class="header" href="#computing-a-legacy-messages-signature" id="computing-a-legacy-messages-signature"><h3>Computing a Legacy Message's Signature</h3></a>
-<p>To obtain the signature of a message, first compute the json encoding specified above, but without the <code>&quot;signature&quot;</code> entry. Then compute the signing encoding of the corresponding legacy data value, using the entry order of the json as a tie-breaker for the entry-order of the signing encoding. Finally use the signing primitive of the message's <code>author</code> on the signing encoding, to obtain the signature.</p>
-<a class="header" href="#computing-the-hash-of-a-legacy-message" id="computing-the-hash-of-a-legacy-message"><h3>Computing the Hash of a Legacy Message</h3></a>
-<p>To compute the hash of a legacy message, use the <a href="feed/./datamode.html">legacy value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
-<a class="header" href="#computing-the-size-of-a-legacy-message" id="computing-the-size-of-a-legacy-message"><h3>Computing the Size of a Legacy Message</h3></a>
-<p>To compute the size of a legacy message, use the <a href="feed/./datamode.html">legacy value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
-<a class="header" href="#legacy-message-validation" id="legacy-message-validation"><h3>Legacy Message Validation</h3></a>
-<p>A legacy message is considered valid if and only if all of the following conditions are met:</p>
+<a class="header" href="#messages" id="messages"><h3>Messages</h3></a>
+<p>To this json encoding corresponds exactly one data value with a fixed order of object entries. This value is referred to as a <em>message</em>.</p>
+<a class="header" href="#computing-a-messages-signature" id="computing-a-messages-signature"><h3>Computing a Message's Signature</h3></a>
+<p>To obtain the signature of a message, first compute the json encoding specified above, but without the <code>&quot;signature&quot;</code> entry. Then compute the signing encoding of the corresponding data value, using the entry order of the json as a tie-breaker for the entry-order of the signing encoding. Finally use the signing primitive of the message's <code>author</code> on the signing encoding, to obtain the signature.</p>
+<a class="header" href="#computing-the-hash-of-a-message" id="computing-the-hash-of-a-message"><h3>Computing the Hash of a Message</h3></a>
+<p>To compute the hash of a message, use the <a href="feed/./datamode.html">value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<a class="header" href="#computing-the-size-of-a-message" id="computing-the-size-of-a-message"><h3>Computing the Size of a Message</h3></a>
+<p>To compute the size of a message, use the <a href="feed/./datamode.html">value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<a class="header" href="#message-validation" id="message-validation"><h3>Message Validation</h3></a>
+<p>A message is considered valid if and only if all of the following conditions are met:</p>
 <ul>
-<li>its json encoding is a possible output of the <a href="#legacy-json-encoding">message creation algorithm</a>
+<li>its json encoding is a possible output of the <a href="#json-encoding">message creation algorithm</a>
 <ul>
 <li>in particular, the claimed signature must match the data and public key</li>
 </ul>
 </li>
 <li>its length is smaller than <code>16385</code></li>
-<li>if <code>previous</code> is <code>null</code>, the sequence number off the message must be the float <code>1</code>, else it must be one larger than that of the message whose hash is the value of <code>previous</code></li>
-</ul>
-<a class="header" href="#compact-legacy-message-representation" id="compact-legacy-message-representation"><h3>Compact Legacy Message Representation</h3></a>
-<p>While the json encoding of legacy messages is necessary for signing, it is very inefficient. The <em>compact legacy message representation</em> (<em>clmr</em>) provides an alernative that takes up less space and is simpler to parse.</p>
-<p>The clmr encoding of a legacy message is the concatenation of the following:</p>
-<ul>
-<li>a byte determined as follows:
-<ul>
-<li>the five most significants bits are set to <code>0</code></li>
-<li>the sixth-most significant bit is set to <code>0</code> if <code>previous</code> is <code>null</code>, <code>1</code> otherwise</li>
-<li>the seventh-most significant bit is set to <code>0</code> if <code>swapped</code> is <code>false</code>, <code>1</code> otherwise</li>
-<li>the least significant bit is set to <code>0</code> if <code>content</code> is an object, <code>1</code> otherwise (i.e. when the content is encrypted)</li>
-</ul>
-</li>
-<li>the <a href="feed/./datatypes.html#multikey-compact-encoding">compact encoding</a> of the <code>author</code> multikey</li>
-<li>the <a href="feed/./datatypes.html#varu64-binary-encoding">VarU64 binary encoding</a> of the <code>sequence</code> integer</li>
-<li>the binary representation of the <code>timestamp</code> 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zero, infinities and NaNs are invalid)</li>
-<li>if <code>previous</code> is not <code>null</code>, the <a href="feed/./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash, but without the leading VarU64 indicating the hash target</li>
-<li>depending on whether the message content is encrypted or not:
-<ul>
-<li>if the message content is not encrypted: the <a href="feed/./datamodel.html#cbor-encoding">legacy cbor encoding</a> of the content</li>
-<li>if the message content is encrypted: the <a href="feed/./datatypes.html#multibox-compact-encoding">compact encoding</a> of the <code>content</code> multibox</li>
-</ul>
-</li>
-<li>a <a href="feed/./datatypes.html#varu64-binary-encoding">VarU64</a> indicating the length of the signature in bytes</li>
-<li>the raw bytes of the <code>signature</code></li>
+<li>if <code>previous</code> is <code>null</code>, the sequence number of the message must be the float <code>1</code>, else it must be one larger than that of the message whose hash is the value of <code>previous</code></li>
 </ul>
 
                     </main>

@@ -165,17 +165,15 @@
 <li>the free-form content of the message</li>
 <li>a signature to prove that the author knew the private key of the feed</li>
 </ul>
-<p>The actual metadata formats also need to include some extra information. Just like the content data, there is both a legacy and a modern metadata format, with the legacy format being supported for bakwards-compatibility.</p>
-<!-- #### HSDT Metadata
-TODO insert new format here -->
-<a class="header" href="#legacy-metadata" id="legacy-metadata"><h2>Legacy Metadata</h2></a>
-<p>The abstract model for legacy metadata is a tuple containing the following entries:</p>
+<p>The actual metadata formats also need to include some extra information.</p>
+<a class="header" href="#metadata" id="metadata"><h2>Metadata</h2></a>
+<p>The abstract model for metadata is a tuple containing the following entries:</p>
 <ul>
 <li><code>previous</code>: either a <a href="./datatypes.html#multihash">multihash</a>, or the distinct value <code>null</code></li>
 <li><code>author</code>: a <a href="./datatypes.html#multikey">multikey</a></li>
 <li><code>sequence</code>: an unsigned 53 bit integer</li>
 <li><code>timestamp</code>: an IEEE 754 64 bit float except the infinities, negative zero, and <code>NaN</code>s</li>
-<li><code>content</code>: a <a href="./datamodel.html#abstract-data-model">legacy data value</a> that is either:
+<li><code>content</code>: a <a href="./datamodel.html#abstract-data-model">data value</a> that is either:
 <ul>
 <li>an object containing an entry <code>&quot;type&quot;</code>, whose value is a string that takes between 3 and 53 (inclusive) code units when encoded as utf16</li>
 <li>a <a href="./datatypes.html#multibox">multibox</a></li>
@@ -188,11 +186,11 @@ TODO insert new format here -->
 </ul>
 </li>
 </ul>
-<a class="header" href="#legacy-json-encoding" id="legacy-json-encoding"><h3>Legacy Json Encoding</h3></a>
-<p>Legacy metadata can be encoded as json, just like regular legacy data. The json encoding is a json object containing the entries listed above, with the following additional regulations:</p>
+<a class="header" href="#json-encoding" id="json-encoding"><h3>Json Encoding</h3></a>
+<p>Metadata can be encoded as json, just like regular data. The json encoding is a json object containing the entries listed above, with the following additional regulations:</p>
 <ul>
-<li>the <code>previous</code> multihash must use the <a href="./datatypes.html#multihash-legacy-encoding">legacy message hash encoding</a> as a string</li>
-<li>the <code>author</code> multikey must use the <a href="./datatypes.html#multikey-legacy-encoding">legacy multikey encoding</a> as a string</li>
+<li>the <code>previous</code> multihash must use the <a href="./datatypes.html#multihash-encoding">message hash encoding</a> as a string</li>
+<li>the <code>author</code> multikey must use the <a href="./datatypes.html#multikey-encoding">multikey encoding</a> as a string</li>
 <li>the <code>sequence</code> is serialized as a float, since that's the only number type available
 <ul>
 <li>it must not be negative</li>
@@ -217,52 +215,27 @@ TODO insert new format here -->
 <li>the <code>swapped</code> boolean is omitted</li>
 <li>an entry <code>&quot;hash&quot;: &quot;sha256&quot;</code> is added</li>
 <li>if <code>swapped</code>, the order of entries must be <code>previous, sequence, author, timestamp, hash, content, signature</code>, else it must be <code>previous, author, sequence, timestamp, hash, content, signature</code></li>
-<li>if <code>content</code> is a multibox, it must use the <a href="./datatypes.html#multibox-legacy-encoding">legacy multibox encoding</a> as a string</li>
+<li>if <code>content</code> is a multibox, it must use the <a href="./datatypes.html#multibox-encoding">multibox encoding</a> as a string</li>
 </ul>
 <p>When creating new messages, the (purely logical) value of <code>swapped</code> should be <code>false</code>. Or you might set it to <code>true</code>, or generate it randomly - nobody can stop you, and everything will still work.</p>
-<a class="header" href="#legacy-message" id="legacy-message"><h3>Legacy Message</h3></a>
-<p>To this json encoding corresponds exactly one legacy data value with a fixed order of object entries. This value is referred to as a <em>legacy message</em>.</p>
-<a class="header" href="#computing-a-legacy-messages-signature" id="computing-a-legacy-messages-signature"><h3>Computing a Legacy Message's Signature</h3></a>
-<p>To obtain the signature of a message, first compute the json encoding specified above, but without the <code>&quot;signature&quot;</code> entry. Then compute the signing encoding of the corresponding legacy data value, using the entry order of the json as a tie-breaker for the entry-order of the signing encoding. Finally use the signing primitive of the message's <code>author</code> on the signing encoding, to obtain the signature.</p>
-<a class="header" href="#computing-the-hash-of-a-legacy-message" id="computing-the-hash-of-a-legacy-message"><h3>Computing the Hash of a Legacy Message</h3></a>
-<p>To compute the hash of a legacy message, use the <a href="./datamode.html">legacy value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
-<a class="header" href="#computing-the-size-of-a-legacy-message" id="computing-the-size-of-a-legacy-message"><h3>Computing the Size of a Legacy Message</h3></a>
-<p>To compute the size of a legacy message, use the <a href="./datamode.html">legacy value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
-<a class="header" href="#legacy-message-validation" id="legacy-message-validation"><h3>Legacy Message Validation</h3></a>
-<p>A legacy message is considered valid if and only if all of the following conditions are met:</p>
+<a class="header" href="#messages" id="messages"><h3>Messages</h3></a>
+<p>To this json encoding corresponds exactly one data value with a fixed order of object entries. This value is referred to as a <em>message</em>.</p>
+<a class="header" href="#computing-a-messages-signature" id="computing-a-messages-signature"><h3>Computing a Message's Signature</h3></a>
+<p>To obtain the signature of a message, first compute the json encoding specified above, but without the <code>&quot;signature&quot;</code> entry. Then compute the signing encoding of the corresponding data value, using the entry order of the json as a tie-breaker for the entry-order of the signing encoding. Finally use the signing primitive of the message's <code>author</code> on the signing encoding, to obtain the signature.</p>
+<a class="header" href="#computing-the-hash-of-a-message" id="computing-the-hash-of-a-message"><h3>Computing the Hash of a Message</h3></a>
+<p>To compute the hash of a message, use the <a href="./datamode.html">value hash computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<a class="header" href="#computing-the-size-of-a-message" id="computing-the-size-of-a-message"><h3>Computing the Size of a Message</h3></a>
+<p>To compute the size of a message, use the <a href="./datamode.html">value length computation</a>, with the signing encoding where the object entry order that would produce the correct signature.</p>
+<a class="header" href="#message-validation" id="message-validation"><h3>Message Validation</h3></a>
+<p>A message is considered valid if and only if all of the following conditions are met:</p>
 <ul>
-<li>its json encoding is a possible output of the <a href="#legacy-json-encoding">message creation algorithm</a>
+<li>its json encoding is a possible output of the <a href="#json-encoding">message creation algorithm</a>
 <ul>
 <li>in particular, the claimed signature must match the data and public key</li>
 </ul>
 </li>
 <li>its length is smaller than <code>16385</code></li>
-<li>if <code>previous</code> is <code>null</code>, the sequence number off the message must be the float <code>1</code>, else it must be one larger than that of the message whose hash is the value of <code>previous</code></li>
-</ul>
-<a class="header" href="#compact-legacy-message-representation" id="compact-legacy-message-representation"><h3>Compact Legacy Message Representation</h3></a>
-<p>While the json encoding of legacy messages is necessary for signing, it is very inefficient. The <em>compact legacy message representation</em> (<em>clmr</em>) provides an alernative that takes up less space and is simpler to parse.</p>
-<p>The clmr encoding of a legacy message is the concatenation of the following:</p>
-<ul>
-<li>a byte determined as follows:
-<ul>
-<li>the five most significants bits are set to <code>0</code></li>
-<li>the sixth-most significant bit is set to <code>0</code> if <code>previous</code> is <code>null</code>, <code>1</code> otherwise</li>
-<li>the seventh-most significant bit is set to <code>0</code> if <code>swapped</code> is <code>false</code>, <code>1</code> otherwise</li>
-<li>the least significant bit is set to <code>0</code> if <code>content</code> is an object, <code>1</code> otherwise (i.e. when the content is encrypted)</li>
-</ul>
-</li>
-<li>the <a href="./datatypes.html#multikey-compact-encoding">compact encoding</a> of the <code>author</code> multikey</li>
-<li>the <a href="./datatypes.html#varu64-binary-encoding">VarU64 binary encoding</a> of the <code>sequence</code> integer</li>
-<li>the binary representation of the <code>timestamp</code> 64 bit float (1 sign bit, 11 exponent bits, 52 mantissa bits, in that order, negative zero, infinities and NaNs are invalid)</li>
-<li>if <code>previous</code> is not <code>null</code>, the <a href="./datatypes.html#multihash-compact-encoding">compact encoding</a> of the <code>previous</code> multihash, but without the leading VarU64 indicating the hash target</li>
-<li>depending on whether the message content is encrypted or not:
-<ul>
-<li>if the message content is not encrypted: the <a href="./datamodel.html#cbor-encoding">legacy cbor encoding</a> of the content</li>
-<li>if the message content is encrypted: the <a href="./datatypes.html#multibox-compact-encoding">compact encoding</a> of the <code>content</code> multibox</li>
-</ul>
-</li>
-<li>a <a href="./datatypes.html#varu64-binary-encoding">VarU64</a> indicating the length of the signature in bytes</li>
-<li>the raw bytes of the <code>signature</code></li>
+<li>if <code>previous</code> is <code>null</code>, the sequence number of the message must be the float <code>1</code>, else it must be one larger than that of the message whose hash is the value of <code>previous</code></li>
 </ul>
 
                     </main>
