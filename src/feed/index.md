@@ -1,6 +1,5 @@
 # Feed spec
 
-TODO split sub-pages into
-
-- SSBC Feed spec
-- Aljoscha Feed spec
+  - [Common Datatypes](./datatypes.md)
+  - [Datamodel](./datamodel.md)
+  - [Feeds and Messages](./messages.md)
